@@ -10,6 +10,7 @@ function ChatBox() {
   const [textareaRows, setTextareaRows] = useState(1);
   const [clipboard, setClipboard] = useState("");
   const [maxWidth, setMaxWidth] = useState(window.innerWidth*0.7)
+  const [heightUnit, setHeightUnit] = useState(1)
 
 
   const handleMessageInput = (e) => {
@@ -140,8 +141,10 @@ function ChatBox() {
     const width = tempSpan.offsetWidth;
     const height = tempSpan.offsetHeight
     document.body.removeChild(tempSpan);
+
     return [width, height];
   };
+
   const getCurrentTime = () => {
     const currentTime = new Date();
     let hours = currentTime.getHours();
@@ -192,7 +195,7 @@ function ChatBox() {
 
         const [letterWidth, letterHeight] = getTextWidth(['a'])
         const lines = message.split("\n")
-        console.log("lines: " + lines)
+      //  console.log("lines: " + lines)
        // const maxWidth = window.innerWidth * 0.70;
 
         const formattedMessage = [];
@@ -220,6 +223,7 @@ function ChatBox() {
 
          //   words.forEach((word) => {
             for(let i = 0; i < words.length; i++){
+           // for(word of words){
                 const word = words[i]
 
 
@@ -239,7 +243,7 @@ function ChatBox() {
 
                 }
               //  if word + previous words are greather than desired maxWidth
-                console.log("word: " + word)
+             //   console.log("word: " + word)
                 if ((lineCounter + word.length) *letterWidth > maxWidth) {
                     formattedMessage.push(currentLine.trim());
                     maxCounter = Math.max(lineCounter - word.length - 1, maxCounter);
@@ -279,14 +283,14 @@ function ChatBox() {
         // maxWidth: `${fontWidth*7}%`, // max-width changed to maxWidth
         display: `flex`,
         borderRadius: `5px`, // border-radius changed to borderRadius
-        alignItems: 'center'
+        alignItems: 'center',
+        overflow: 'visible'
     }
 
     const MsgStyle = (fontWidth, fontHeight, widthUnit, heightUnit) => {
         return {
             width: `${fontWidth * widthUnit}px`,
             backgroundColor: '#dcf8c6',
-            width: `${fontWidth * widthUnit}px`,
             alignSelf: 'flex-start',
             height: `${fontHeight * heightUnit}px`
         }
@@ -296,7 +300,6 @@ function ChatBox() {
         return{
             width: `${fontWidth * widthUnit}px`,
             backgroundColor: '#cce5ff',
-            width: `${fontWidth * widthUnit}px`,
             alignSelf: 'flex-end',
             justifySelf: 'right',
             height: `${fontHeight * heightUnit}px`
@@ -309,15 +312,16 @@ function ChatBox() {
     heightUnit = letterHeight
     messages.forEach((message, index) => {
         
-        let msgTextArray = [message.text]
-        msgTextArray = formatMessage(message.text)
-        heightUnit *= msgTextArray.length
-        
-
-        widthUnit = getTextWidth(msgTextArray) + extraSpace
-        console.log(message.text.length*7)
-        console.log(window.innerWidth*0.4)
+        const msgTextArray = formatMessage(message.text)
         console.log(msgTextArray)
+      //  setHeightUnit((prev) => prev + letterHeight*msgTextArray.length)
+        heightUnit +=  (letterHeight*msgTextArray.length)
+        
+        const [longestTextWidth, h] = getTextWidth(msgTextArray)
+        widthUnit = longestTextWidth + extraSpace
+     //   console.log(message.text.length*7)
+     //   console.log(window.innerWidth*0.4)
+       // console.log(msgTextArray)
         
 
         const msgStyle = MsgStyle(fontWidth, fontHeight, widthUnit, heightUnit)
