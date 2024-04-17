@@ -11,8 +11,9 @@
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
+    "db": "^6.0.3",
     "express": "^4.19.2",
     "mysql": "^2.18.1",
-    "pg": "^8.11.5"
+    "sequelize": "^6.37.3"
   }
 }

@@ -1,14 +1,12 @@
 
-
-const getMessagesBySenderIdAndReceiverId = (app, connection) => {
-    app.get('/chatbox/messages/:senderId/:receiverId', (req, res) => {
-        const { senderId, receiverId } = req.params;
-        const tableName = 'messages'
+const getChatsBySenderId = (app, connection) => {
+    app.get('/chatbox/chats/:senderId', (req, res) => {
+        const { senderId } = req.params;
+        const tableName = 'chats'
         const queryString = `
         SELECT * 
         FROM ${tableName} 
-        WHERE (senderId=${senderId} AND receiverId=${receiverId})
-        OR (senderId=${receiverId} AND receiverId=${senderId})`;
+        WHERE senderId=${senderId}`;
         // Execute the query
         connection.query(queryString, (err, result) => {
             if (err) {
@@ -23,4 +21,4 @@ const getMessagesBySenderIdAndReceiverId = (app, connection) => {
     });
 }
 
-module.exports = getMessagesBySenderIdAndReceiverId;
+module.exports = getChatsBySenderId;

@@ -2,8 +2,8 @@ const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
 const app = express();
-const messageRoutes = require('./routes/messages')
 const messageQuery = require('./queries/messages')
+const chatQuery = require('./queries/chats')
 
 
 
@@ -55,6 +55,7 @@ app.get('/chatbox/data', (req, res) => {
 });
 
 messageQuery(app, connection)
+chatQuery(app, connection)
 
 
 // Start the Express server

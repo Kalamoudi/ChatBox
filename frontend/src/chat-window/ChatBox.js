@@ -13,21 +13,38 @@ function ChatBox() {
   const [maxWidth, setMaxWidth] = useState(window.innerWidth*0.7)
   const [heightUnit, setHeightUnit] = useState(1)
   const [userData, setUserData] = useState([]);
-  const [senderId, setSenderId] = useState(0)
+  const [senderId, setSenderId] = useState(1)
+
   const [gatherData, setGatherData] = useState(true)
+  const [processData, setProcessData] = useState(true)
+
+
+  const [oldMessagesData, setOldMessagesData] = useState([])
   const [oldMessages, setOldMessages] = useState([])
+  const [myUser, setMyUser] = useState(1)
+  const [otherUser, SetOtherUser] = useState(2)
 
 
 
-  const fetchOldMessages = async () => {
+  const fetchMessages = async () => {
     try{
-      const endpoint = 'http//localhost:5000/chatbox/chats/chatsession'
+      const endpoint = `http://localhost:5000/chatbox/messages/${myUser}/${otherUser}`
       const response = await axios.get(endpoint)
-      setOldMessages(response.data)
+      setOldMessagesData(response.data)
+     // console.log(response.data)
     } catch(error){
-      console.error('Error fetching old messages', error)
+      console.error('Error fetching chat information', error)
     }
   };
+  const handleOldMessages = () => {
+    const newArray = []
+    oldMessagesData.forEach((data) => { 
+      newArray.push({text: data.content, sender: data.senderId})
+    })
+    console.log("newArray:")
+    console.log(newArray)
+    setOldMessages(newArray)
+  } 
 
   
   const fetchData = async () => {
@@ -138,24 +155,30 @@ function ChatBox() {
     
   }
 
-  // Allows dynamic change of data 
-  useEffect(() => {
-    setTextareaRows(Math.min(6, messageLines));
-    if(gatherData){
-        fetchData();
-        setGatherData(false)
-    }
-    //setSender(userData[0]["username"])
-    
-  }, [messageText]);
 
   useEffect(() => {
-    
-    if(userData.length > 0){
-      console.log('userData:', userData[0].username);
-      setSender(userData[0].username)
-    }
-  }, [sender]);
+    //setTextareaRows(Math.min(6, messageLines)); // create another useEffect for this
+      fetchData();
+      fetchMessages()
+      setGatherData(false)   
+  }, []);
+
+  useEffect(() => {  
+      if(userData.length > 0){
+        console.log('userData:', userData[0].username);
+        setSender(userData[0].username) 
+      }
+      console.log(oldMessagesData)  
+      if(oldMessagesData.length > 0){ 
+        handleOldMessages(); 
+        console.log("oldMessagesData:")
+        console.log(oldMessagesData)  
+        console.log("oldMessages:")
+        console.log(oldMessages)
+
+      }
+      setProcessData(false) 
+  }, [oldMessagesData]);
 
   const handleSendMessage = () => {
     if (messageText) {
@@ -312,6 +335,8 @@ function ChatBox() {
 
   const handleMessageView = (messages) => {
 
+    console.log(messages)
+
     const [letterWidth, letterHeight] = getTextWidth(['a'])
     let fontWidth = 1
     let fontHeight = 1.2
@@ -358,17 +383,15 @@ function ChatBox() {
     messages.forEach((message, index) => {
         
         const msgTextArray = formatMessage(message.text)
-        console.log(msgTextArray)
       //  setHeightUnit((prev) => prev + letterHeight*msgTextArray.length)
         heightUnit =  (letterHeight*msgTextArray.length)
-        console.log()
         
         const [longestTextWidth, h] = getTextWidth(msgTextArray)
         widthUnit = longestTextWidth + extraSpace
         
         const msgStyle = MsgStyle(fontWidth, fontHeight, widthUnit, heightUnit)
         const msgOtherStyle = MsgOtherStyle(fontWidth, fontHeight, widthUnit, heightUnit)
-        let classN = message.sender === 0 ? msgStyle : msgOtherStyle
+        let classN = message.sender === 1 ? msgStyle : msgOtherStyle
         const combinedDic = { ...msg, ...classN };
         const currentTime = getCurrentTime();
 
@@ -396,15 +419,22 @@ function ChatBox() {
   }
 
   const handleSenderChange = () => {
-    const newId = senderId === 0 ? 1 : 0
+    const newId = senderId === 1 ? 2 : 1
     setSenderId(newId)
     console.log("New Sender: " + newId)
     setSender(userData[newId].username);
   };
 
+
+  useEffect(() => {
+    handleMessageView(oldMessages)
+ 
+  }, [])
+
   return (
     <div className="chat-box">
       <div className="chat-window">
+        {handleMessageView(oldMessages)}
         {handleMessageView(messages)}
       </div>
       <div className="type-bar">
