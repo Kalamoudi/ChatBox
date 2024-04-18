@@ -59,3 +59,24 @@
     border-radius: 5px;
     cursor: pointer;
   }
+
+  .date-block {
+
+    position:relative;
+    top: 2%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex; /* Use flexbox */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    background-color: rgb(142, 187, 206);
+    margin: 5px;
+    height: 22px;
+    width: 90px;
+    border-radius: 8px;
+  }
+  
+  .date-text {
+    font-weight: bold;
+    font-size: 11px;
+  }

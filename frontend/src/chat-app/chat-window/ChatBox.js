@@ -12,6 +12,8 @@ function ChatBox() {
   const [senderId, setSenderId] = useState(1)
   const [oldMessagesData, setOldMessagesData] = useState([])
   const [oldMessages, setOldMessages] = useState([])
+  //const [previousDate, setPreviousDate] = useState("")
+  let previousDate = ""
   
 
   // Testing purposes
@@ -91,6 +93,7 @@ function ChatBox() {
 
         const sortedOldMessagesData = response.data.sort((a, b) => a.ID - b.ID)
         setOldMessagesData(sortedOldMessagesData)
+
         console.log("Fetched Old Messages:")
         console.log(response.data)
       } catch(error){
@@ -116,7 +119,13 @@ function ChatBox() {
         console.log("oldMessages:")
         console.log(oldMessages)
 
+
+      //  setPreviousDate(oldMessagesData[0].date.slice(0, 10))
+        console.log("First Day:")
+        console.log(oldMessagesData[0].date.slice(0, 10))
+
       }
+
   }, [oldMessagesData]);
 
   // handles text bar size
@@ -186,8 +195,9 @@ function ChatBox() {
     return [width, height];
   };
 
-  const getCurrentTime = () => {
-    const currentTime = new Date();
+  const getCurrentTime = (messageDate) => {
+
+    const currentTime = new Date(messageDate);
     let hours = currentTime.getHours();
     const minutes = currentTime.getMinutes();
     let ampm = 'AM'
@@ -203,6 +213,21 @@ function ChatBox() {
     return formattedTime;
 };
 
+  const getDaySeperatorDate = (dateString) => {
+
+    const numToMonth = {
+      '01': "Jan", '02': "Feb", '03': "Mar", '04': "Apr", '05': "May",
+      '06': "Jun", '07': "Jul", '08': "Aug", '09': "Sep", '10': "Oct",
+      '11': "Nov", '12': "Dec"
+    }
+
+    let date = numToMonth[dateString.slice(5, 7)]
+    date += ' ' + dateString.slice(8, 10)
+    date += ' ' + dateString.slice(0, 4)
+
+    return date
+
+  }
 
 
   const formatMessage = (message) => {
@@ -332,7 +357,6 @@ function ChatBox() {
     messages.forEach((message, index) => {
         
         const msgTextArray = formatMessage(message.content)
-      //  setHeightUnit((prev) => prev + letterHeight*msgTextArray.length)
         heightUnit =  (letterHeight*msgTextArray.length)
         
         const [longestTextWidth, h] = getTextWidth(msgTextArray)
@@ -345,21 +369,33 @@ function ChatBox() {
 
 
 
-        const currentTime = getCurrentTime();
+        const formattedTime = getCurrentTime(message.date);
 
-        const [timeTextWidth, timeTextHeight] = getTextWidth([currentTime])
-        let timePosX = timeTextWidth*(currentTime.length + 2)
+        const [timeTextWidth, timeTextHeight] = getTextWidth([formattedTime])
+        let timePosX = timeTextWidth*(formattedTime.length + 2)
         let timePosY = msgTextArray.length
         timePosX = 20
         timePosY = letterHeight*(msgTextArray.length-1)*fontHeight + 4
     
+        let showDate = previousDate
+        const newDate = message.date.slice(0, 10)
+        if(showDate !== newDate){
+          //setPreviousDate(newDate)
+          previousDate = newDate
+          showDate = getDaySeperatorDate(newDate)
+        
 
-
+          htmlElements.push(
+              <div className="date-block">
+                  <span className="date-text">{showDate}</span>
+              </div>
+          )
+        }
         htmlElements.push(
             <div key={index} style={{...combinedDic, position: 'relative'}}>
                 {/* <p>{msgText}</p> */}
                 <p>{msgTextArray.map((line, index) => <span key={index}>{line}<br /></span>)}</p>
-                <p style={{ color: 'grey', fontSize: '12px', position: 'absolute', top: timePosY, right: timePosX }}>{currentTime}</p>
+                <p style={{ color: 'grey', fontSize: '12px', position: 'absolute', top: timePosY, right: timePosX }}>{formattedTime}</p>
             </div>
         )
 
