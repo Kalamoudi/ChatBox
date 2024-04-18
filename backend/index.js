@@ -4,6 +4,7 @@ const cors = require('cors');
 const app = express();
 const messageQuery = require('./queries/messages')
 const chatQuery = require('./queries/chats')
+const bodyParser = require('body-parser');
 
 
 
@@ -11,6 +12,7 @@ const chatQuery = require('./queries/chats')
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
+app.use(bodyParser.json())
 
 // MySQL connection configuration
 const connection = mysql.createConnection({
@@ -54,8 +56,11 @@ app.get('/chatbox/data', (req, res) => {
     });
 });
 
-messageQuery(app, connection)
+messageQuery.getMessagesBySenderIdAndReceiverId(app, connection)
+messageQuery.getAllMessages(app, connection)
+messageQuery.postMessagesBySenderIdAndReceiverId(app, connection)
 chatQuery(app, connection)
+
 
 
 // Start the Express server

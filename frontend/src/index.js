@@ -6,7 +6,7 @@ import reportWebVitals from './reportWebVitals';
 import Product from './Product'
 import FetchHorses from './FetchHorses';
 import BlockBreaker from './block-breaker/BlockBreaker';
-import Chatbox from './chat-window/ChatBox'
+import Chatbox from './chat-app/chat-window/ChatBox'
 
 import './style.css';
 
