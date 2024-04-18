@@ -29,8 +29,7 @@ function ChatBox() {
     oldMessagesData.forEach((data) => { 
       newArray.push({text: data.content, sender: data.senderId})
     })
-    console.log("newArray:")
-    console.log(newArray)
+
     setOldMessages(newArray)
   } 
 
@@ -51,8 +50,6 @@ function ChatBox() {
     const currentDate = new Date();
     const mySqlDate = currentDate.toISOString().replace('T', ' ').slice(0, -5)
 
-    console.log("DateTime format")
-    console.log(mySqlDate)
     
     const messageJSON = {
       senderId: myUser,
@@ -61,8 +58,6 @@ function ChatBox() {
       date: mySqlDate,
     };
 
-    console.log("messageJSON: ")
-    console.log(messageJSON)
     await fetch(`http://localhost:5000/chatbox/messages`, {
       method: 'POST',
       headers: {
@@ -94,8 +89,6 @@ function ChatBox() {
         const sortedOldMessagesData = response.data.sort((a, b) => a.ID - b.ID)
         setOldMessagesData(sortedOldMessagesData)
 
-        console.log("Fetched Old Messages:")
-        console.log(response.data)
       } catch(error){
         console.error('Error fetching chat information', error)
       }
@@ -108,22 +101,10 @@ function ChatBox() {
   // handle events after data is fetched
   useEffect(() => {  
       if(userData.length > 0){
-        console.log('userData:', userData[0].username);
         setSender(userData[0].username) 
       }
-      console.log(oldMessagesData)  
       if(oldMessagesData.length > 0){ 
         handleOldMessages(); 
-        console.log("oldMessagesData:")
-        console.log(oldMessagesData)  
-        console.log("oldMessages:")
-        console.log(oldMessages)
-
-
-      //  setPreviousDate(oldMessagesData[0].date.slice(0, 10))
-        console.log("First Day:")
-        console.log(oldMessagesData[0].date.slice(0, 10))
-
       }
 
   }, [oldMessagesData]);
@@ -235,8 +216,6 @@ function ChatBox() {
 
       const [letterWidth, letterHeight] = getTextWidth(['a'])
       const lines = message.split("\n")
-    //  console.log("lines: " + lines)
-      // const maxWidth = window.innerWidth * 0.70;
 
       const formattedMessage = [];
       let maxCounter = 0;
@@ -245,25 +224,7 @@ function ChatBox() {
           let lineCounter = 0;
           let currentLine = '';
 
-      //    Special case: If there is only one word and its length exceeds the maximum width
-          // if (words.length === 1 && words[0].length * 7 > maxWidth) {
-          //     console.log("Word longer than half")
-          //     formattedMessage.push(words[0].slice(0, Math.floor(maxWidth) / 7));
-          //     formattedMessage.push(words[0].slice(Math.floor(maxWidth) / 7));
-          //     formattedMessage.forEach((msg) => {
-          //         if(msg.length > maxCounter){
-          //             maxCounter = msg.length
-          //         }
-          //     })
-          //   //  maxCounter = Math.max(words[0].length, maxCounter);
-          //     console.log("MaxCounter: "+ maxCounter)
-          //     console.log("MessageTextLength: " + message.length)
-          //     return [formattedMessage, maxCounter];
-          // }
-
-        //   words.forEach((word) => {
           for(let i = 0; i < words.length; i++){
-          // for(word of words){
               const word = words[i]
 
 
@@ -282,8 +243,7 @@ function ChatBox() {
                   continue
 
               }
-            //  if word + previous words are greather than desired maxWidth
-            //   console.log("word: " + word)
+              
               if ((lineCounter + word.length) *letterWidth > maxWidth) {
                   formattedMessage.push(currentLine.trim());
                   maxCounter = Math.max(lineCounter - word.length - 1, maxCounter);
@@ -309,7 +269,6 @@ function ChatBox() {
 
   const handleMessageView = (messages) => {
 
-    console.log(messages)
 
     const [letterWidth, letterHeight] = getTextWidth(['a'])
     let fontWidth = 1
@@ -386,7 +345,7 @@ function ChatBox() {
         
 
           htmlElements.push(
-              <div className="date-block">
+              <div key={`date_${newDate}`} className="date-block">
                   <span className="date-text">{showDate}</span>
               </div>
           )
@@ -409,7 +368,6 @@ function ChatBox() {
   const handleSenderChange = () => {
     const newId = senderId === 1 ? 2 : 1
     setSenderId(newId)
-    console.log("New Sender: " + newId)
     setSender(userData[newId].username);
   };
 
