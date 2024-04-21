@@ -66,14 +66,16 @@
     top: 2%;
     left: 50%;
     transform: translate(-50%, -50%);
-    display: flex; /* Use flexbox */
-    justify-content: center; /* Center horizontally */
-    align-items: center; /* Center vertically */
+    display: flex; 
+    justify-content: center;
+    align-items: center; 
     background-color: rgb(142, 187, 206);
-    margin: 5px;
-    height: 22px;
+    margin-top: 10px;
+    margin-bottom: 24px;
+    height: 30px;
     width: 90px;
     border-radius: 8px;
+  
   }
   
   .date-text {

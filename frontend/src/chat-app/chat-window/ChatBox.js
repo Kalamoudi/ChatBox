@@ -4,16 +4,19 @@ import ClipboardPaste from '../../clipboardCopyPaste/clipboardPaste'
 import axios from 'axios';
 
 function ChatBox() {
+
+  const maxWidthPercentage = 0.7
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
   const [textareaRows, setTextareaRows] = useState(1);
-  const [maxWidth, setMaxWidth] = useState(window.innerWidth*0.7)
+  const [maxWidth, setMaxWidth] = useState(window.innerWidth*maxWidthPercentage)
   const [userData, setUserData] = useState([]);
   const [senderId, setSenderId] = useState(1)
   const [oldMessagesData, setOldMessagesData] = useState([])
   const [oldMessages, setOldMessages] = useState([])
   //const [previousDate, setPreviousDate] = useState("")
   let previousDate = ""
+  const [previousSender, setPreviousSender] = useState(1)
   
 
   // Testing purposes
@@ -50,10 +53,12 @@ function ChatBox() {
     const currentDate = new Date();
     const mySqlDate = currentDate.toISOString().replace('T', ' ').slice(0, -5)
 
+    const sender = senderId === 1 ? 2 : 1
+    const receiver = senderId === 1 ? 1 : 2
     
     const messageJSON = {
-      senderId: myUser,
-      receiverId: otherUser,
+      senderId: sender,
+      receiverId: receiver,
       content: message,
       date: mySqlDate,
     };
@@ -107,6 +112,9 @@ function ChatBox() {
         handleOldMessages(); 
       }
 
+      if(oldMessagesData.length > 1){
+        setPreviousSender(oldMessagesData[oldMessagesData.length-1].senderId)
+      }
   }, [oldMessagesData]);
 
   // handles text bar size
@@ -129,6 +137,10 @@ function ChatBox() {
     setMessageText('')
     setTextareaRows(1)
 
+    if(messages.length > 0){
+      setPreviousSender(messages[messages.length-1].senderId)
+    }
+
   }, [messages])
 
 
@@ -136,15 +148,19 @@ function ChatBox() {
   const handleSendMessage = () => {
     if (messageText) {
 
+      const sender = senderId === 1 ? 2 : 1
+      const receiver = senderId === 1 ? 1 : 2
+
       const newMessageEntry = {
-        senderId: myUser,
-        receiverId: otherUser,
+        senderId: sender,
+        receiverId: receiver,
         content: messageText,
         date: new Date().toISOString()
       }
 
       //setMessages([...messages, { text: messageText, sender: senderId }]);
       setMessages(prev => [...prev, newMessageEntry])
+
       
       setMessageText('');
       setTextareaRows(1);
@@ -217,35 +233,54 @@ function ChatBox() {
       const [letterWidth, letterHeight] = getTextWidth(['a'])
       const lines = message.split("\n")
 
+    //  console.log(lines)
+
       const formattedMessage = [];
       let maxCounter = 0;
       lines.forEach((line) => {
           const words = line.split(' ');
+          console.log(words)
+          console.log(words)
           let lineCounter = 0;
           let currentLine = '';
 
           for(let i = 0; i < words.length; i++){
               const word = words[i]
-
-
+              
               // If a word is greather than desired maxWidth
               if((word.length) *letterWidth > maxWidth){
-                  formattedMessage.push(currentLine.trim())
+                  if(currentLine.length > 0){
+                    formattedMessage.push(currentLine)
+                  }
                   maxCounter = Math.max(lineCounter, maxCounter);
-                  const lengthFirst = Math.floor(word.length * 0.7);
-                  const firstWord = word.substring(0, lengthFirst)
-                  const secondWord = word.substring(lengthFirst)
-                  maxCounter = Math.max(lengthFirst, maxCounter);
-                  formattedMessage.push(firstWord.trim())
-                  formattedMessage.push(secondWord.trim())
                   currentLine = ''
                   lineCounter = 0
+
+                  // console.log(word.length*letterWidth)
+                  // console.log(maxWidth)
+                  const partLength = Math.floor(maxWidth/letterWidth);
+                  const splitParts = []
+                  for(let i = 0; i < word.length; i += partLength){
+                    splitParts.push(word.slice(i, i+partLength))
+                  }
+                  // console.log("Split Parts:")
+                  // console.log(splitParts)
+                  for(let part of splitParts){
+                    maxCounter = Math.max(part.length, maxCounter)
+                    formattedMessage.push(part)
+                  }
+                  
+                  // const firstWord = word.substring(0, partLength)
+                  // const secondWord = word.substring(partLength)
+                  // maxCounter = Math.max(partLength, maxCounter);
+                  // formattedMessage.push(firstWord.trim())
+                  // formattedMessage.push(secondWord.trim())
                   continue
 
               }
               
               if ((lineCounter + word.length) *letterWidth > maxWidth) {
-                  formattedMessage.push(currentLine.trim());
+                  formattedMessage.push(currentLine);
                   maxCounter = Math.max(lineCounter - word.length - 1, maxCounter);
                   currentLine = '';
                   lineCounter = 0;
@@ -259,10 +294,13 @@ function ChatBox() {
           }
 
           if (lineCounter !== 0) {
-              formattedMessage.push(currentLine.trim());
+              formattedMessage.push(currentLine);
               maxCounter = Math.max(lineCounter, maxCounter);
           }
       })
+
+
+      // console.log(formattedMessage)
       return formattedMessage;
   };
 
@@ -270,71 +308,71 @@ function ChatBox() {
   const handleMessageView = (messages) => {
 
 
-    const [letterWidth, letterHeight] = getTextWidth(['a'])
-    let fontWidth = 1
-    let fontHeight = 1.2
+    const [letterWidth, letterHeight] = getTextWidth(['A'])
     let widthUnit = 1
     let heightUnit = 1
     const extraSpace = letterWidth*11
 
     const msg = {
-        margin: `10px`,
+        margin: `4px`,
         padding: `5px`,
         paddingLeft: '7px',
         // maxWidth: `${fontWidth*7}%`, // max-width changed to maxWidth
-        display: `flex`,
+        display: 'flex',
         borderRadius: `5px`, // border-radius changed to borderRadius
         alignItems: 'center',
         overflow: 'visible'
     }
 
-    const MsgStyle = (fontWidth, fontHeight, widthUnit, heightUnit) => {
+    const MsgStyle = (widthUnit, heightUnit) => {
         return {
-            width: `${fontWidth * widthUnit}px`,
+            width: `${widthUnit}px`,
             backgroundColor: '#dcf8c6',
             alignSelf: 'flex-start',
-            height: `${fontHeight * heightUnit}px`
+            height: `${heightUnit}px`
         }
     };
 
-    const MsgOtherStyle = (fontWidth, fontHeight, widthUnit, heightUnit) => {
+    const MsgOtherStyle = (widthUnit, heightUnit) => {
         return{
-            width: `${fontWidth * widthUnit}px`,
+            width: `${widthUnit}px`,
             backgroundColor: '#cce5ff',
             alignSelf: 'flex-end',
             justifySelf: 'right',
-            height: `${fontHeight * heightUnit}px`
+            height: `${heightUnit}px`
         }
     };
 
 
 
     const htmlElements = []
-    heightUnit = letterHeight
+    
 
-
+    const initialHeightUnit = letterHeight
+    heightUnit = 0
     messages.forEach((message, index) => {
         
         const msgTextArray = formatMessage(message.content)
-        heightUnit =  (letterHeight*msgTextArray.length)
+       //  heightUnit =  (letterHeight*msgTextArray.length)
+        heightUnit =  letterHeight*(msgTextArray.length)
         
         const [longestTextWidth, h] = getTextWidth(msgTextArray)
         widthUnit = longestTextWidth + extraSpace
         
-        const msgStyle = MsgStyle(fontWidth, fontHeight, widthUnit, heightUnit)
-        const msgOtherStyle = MsgOtherStyle(fontWidth, fontHeight, widthUnit, heightUnit)
+        const msgStyle = MsgStyle(widthUnit, heightUnit)
+        const msgOtherStyle = MsgOtherStyle(widthUnit, heightUnit)
         let classN = message.senderId === 1 ? msgStyle : msgOtherStyle
         const combinedDic = { ...msg, ...classN };
 
 
 
         const formattedTime = getCurrentTime(message.date);
-
         const [timeTextWidth, timeTextHeight] = getTextWidth([formattedTime])
+
         let timePosX = timeTextWidth*(formattedTime.length + 2)
         let timePosY = msgTextArray.length
         timePosX = 20
-        timePosY = letterHeight*(msgTextArray.length-1)*fontHeight + 4
+        timePosY = letterHeight*(msgTextArray.length-1) + 1
     
         let showDate = previousDate
         const newDate = message.date.slice(0, 10)
@@ -345,15 +383,19 @@ function ChatBox() {
         
 
           htmlElements.push(
-              <div key={`date_${newDate}`} className="date-block">
-                  <span className="date-text">{showDate}</span>
-              </div>
+            <div key={`date_${newDate}`} className="date-block" style={{padding: '2px'}}>
+                <span className="date-text">{showDate}</span>
+            </div>
           )
         }
+
+        const topMargin = previousSender === message.senderId ? 25 : 0
+
+        console.log(msgTextArray)
         htmlElements.push(
-            <div key={index} style={{...combinedDic, position: 'relative'}}>
+            <div key={index} style={{...combinedDic, position: 'relative', marginTop: `${topMargin}px`}}>
                 {/* <p>{msgText}</p> */}
-                <p>{msgTextArray.map((line, index) => <span key={index}>{line}<br /></span>)}</p>
+                <p style={{whiteSpace: 'pre-wrap'}}>{msgTextArray.map((line, index) => <span key={index}>{line}<br /></span>)}</p>
                 <p style={{ color: 'grey', fontSize: '12px', position: 'absolute', top: timePosY, right: timePosX }}>{formattedTime}</p>
             </div>
         )
@@ -366,9 +408,13 @@ function ChatBox() {
   }
 
   const handleSenderChange = () => {
-    const newId = senderId === 1 ? 2 : 1
+    // const newId = senderId === 1 ? 2 : 1
+    // setSenderId(newId)
+    // setSender(userData[newId].username);
+
+    const newId = senderId === 1? 2 : 1
     setSenderId(newId)
-    setSender(userData[newId].username);
+
   };
 
   return (
