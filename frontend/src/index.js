@@ -6,7 +6,8 @@ import reportWebVitals from './reportWebVitals';
 import Product from './Product'
 import FetchHorses from './FetchHorses';
 import BlockBreaker from './block-breaker/BlockBreaker';
-import Chatbox from './chat-app/chat-window/ChatBox'
+import ChatWindow from './chat-app/chat-window/ChatWindow'
+import ChatBox from './chat-app/chat-window/ChatBox';
 
 import './style.css';
 
@@ -26,7 +27,8 @@ createRoot(document.getElementById('root')).render(
         <Route path="/" element={<Product />} />
         <Route path="/horses" element={<FetchHorses />} />
         <Route path="/game" element={<BlockBreaker />} />
-        <Route path="/message" element={<Chatbox />} />
+        <Route path="/chatapp" element={<ChatWindow />} />
+        <Route path="/chatbox" element={<ChatBox />} />
       </Routes>
     </Router>
   </React.StrictMode>,

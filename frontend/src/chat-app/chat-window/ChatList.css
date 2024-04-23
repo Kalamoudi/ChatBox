@@ -1,0 +1,25 @@
+.chat-list {
+    box-sizing: border-box;
+    float: left;
+    width: 300px;
+    /* border: 1px solid #ccc; */
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
+    /* border-radius: 5px; */
+    overflow: hidden;
+  }
+  
+  .chat-list-window {
+    height: 700px;
+    padding: 10px;
+    /* overflow-y: scroll; */
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(119, 166, 183);
+  }
+
+  .chat-list-item {
+    height: 200px;
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+  }

@@ -21,4 +21,6 @@ const getChatsBySenderId = (app, connection) => {
     });
 }
 
-module.exports = getChatsBySenderId;
+module.exports = {
+    getChatsBySenderId
+}

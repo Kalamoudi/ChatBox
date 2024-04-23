@@ -3,26 +3,31 @@ import './ChatBox.css';
 import ClipboardPaste from '../../clipboardCopyPaste/clipboardPaste'
 import axios from 'axios';
 
-function ChatBox() {
+function ChatBox(props) {
+
+
+  const {senderId, setSenderId, receiverId, serReceiverId} = props
+
 
   const maxWidthPercentage = 0.7
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
-  const [textareaRows, setTextareaRows] = useState(1);
+  const [textareaRows, setTextareaRows] = useState(2);
   const [maxWidth, setMaxWidth] = useState(window.innerWidth*maxWidthPercentage)
   const [userData, setUserData] = useState([]);
-  const [senderId, setSenderId] = useState(1)
+  //const [senderId, setSenderId] = useState(1)
   const [oldMessagesData, setOldMessagesData] = useState([])
   const [oldMessages, setOldMessages] = useState([])
   //const [previousDate, setPreviousDate] = useState("")
   let previousDate = ""
   const [previousSender, setPreviousSender] = useState(1)
+  const [linesCount, setLinesCount] = useState(0)
+  let textRows = 1
   
 
   // Testing purposes
-  const [myUser, setMyUser] = useState(1)
   const [otherUser, SetOtherUser] = useState(2)
-  const [sender, setSender] = useState('me');
+  const [currentSender, setCurrentSender] = useState('N/A')
 
 
 
@@ -38,12 +43,7 @@ function ChatBox() {
 
 
   const handleMessageInput = (e) => {
-    for(let i = 0; i < e.target.value.length; i++){
-        const chr = e.target.value[i]
-        if(chr === '\n'){
-            setTextareaRows((prev) => Math.min(6, prev+2))
-        }
-    }
+    
     setMessageText(e.target.value)
     
   }
@@ -53,8 +53,8 @@ function ChatBox() {
     const currentDate = new Date();
     const mySqlDate = currentDate.toISOString().replace('T', ' ').slice(0, -5)
 
-    const sender = senderId === 1 ? 2 : 1
-    const receiver = senderId === 1 ? 1 : 2
+    const sender = senderId
+    const receiver = receiverId
     
     const messageJSON = {
       senderId: sender,
@@ -77,18 +77,28 @@ function ChatBox() {
     const fetchUser = async () => {
       try {
         // Make a GET request to the backend API endpoint
-        const response = await axios.get('http://localhost:5000/chatbox/data');
+        const response = await axios.get('http://localhost:5000/chatbox/users');
         // Set the fetched data to the state
-        setUserData(response.data);
+       // setUserData(response.data);
+        const users = response.data
+        const dictionary = {}
+        for (let user of users) {
+          const key = user.user_id
+          if (!(key in dictionary)) { // Wrap the condition in parentheses
+            dictionary[key] = user;
+          }
+        }
+        setUserData(dictionary)
   
       } catch (error) {
         console.error('Error fetching data:', error);
       }
       
     };
+
     const fetchMessages = async () => {
       try{
-        const endpoint = `http://localhost:5000/chatbox/messages/${myUser}/${otherUser}`
+        const endpoint = `http://localhost:5000/chatbox/messages/${senderId}/${receiverId}`
         const response = await axios.get(endpoint)
 
         const sortedOldMessagesData = response.data.sort((a, b) => a.ID - b.ID)
@@ -100,21 +110,17 @@ function ChatBox() {
     };
 
       fetchUser();
-      fetchMessages() 
-  }, []);
+      fetchMessages();
+  }, [receiverId]);
+
+
 
   // handle events after data is fetched
   useEffect(() => {  
-      if(userData.length > 0){
-        setSender(userData[0].username) 
-      }
-      if(oldMessagesData.length > 0){ 
-        handleOldMessages(); 
-      }
-
-      if(oldMessagesData.length > 1){
-        setPreviousSender(oldMessagesData[oldMessagesData.length-1].senderId)
-      }
+    if(oldMessagesData.length > 1){
+      setPreviousSender(oldMessagesData[oldMessagesData.length-1].senderId)
+    
+    }
   }, [oldMessagesData]);
 
   // handles text bar size
@@ -129,13 +135,16 @@ function ChatBox() {
         }
         return count
     }
+
     setTextareaRows(Math.max(2, Math.min(6, 1+findNumberOfNewLine(messageText))));
+   
+  
   }, [messageText])
 
   // handle text bar value
   useEffect(() => {
-    setMessageText('')
-    setTextareaRows(1)
+    // setMessageText('')
+    // setTextareaRows(2)
 
     if(messages.length > 0){
       setPreviousSender(messages[messages.length-1].senderId)
@@ -148,8 +157,21 @@ function ChatBox() {
   const handleSendMessage = () => {
     if (messageText) {
 
-      const sender = senderId === 1 ? 2 : 1
-      const receiver = senderId === 1 ? 1 : 2
+      let countSpaces = 0
+
+      for(let letter of messageText){
+        if(letter === ' '){
+          countSpaces += 1
+        }
+      }
+
+      if(countSpaces === messageText.length){
+        return
+      }
+
+
+      const sender = senderId
+      const receiver = receiverId
 
       const newMessageEntry = {
         senderId: sender,
@@ -165,6 +187,7 @@ function ChatBox() {
       setMessageText('');
       setTextareaRows(1);
       handlePost(messageText)
+      
 
     }
     
@@ -179,6 +202,8 @@ function ChatBox() {
             text = arrayText
         }
     })
+
+
     const tempSpan = document.createElement('span');
     tempSpan.style.visibility = 'hidden';
     tempSpan.style.position = 'absolute';
@@ -186,10 +211,13 @@ function ChatBox() {
     tempSpan.textContent = text;
     document.body.appendChild(tempSpan);
     const width = tempSpan.offsetWidth;
-    const height = tempSpan.offsetHeight
+   // const height = tempSpan.offsetHeight
+    const height = window.getComputedStyle(tempSpan).height
     document.body.removeChild(tempSpan);
 
-    return [width, height];
+
+
+    return [width, parseFloat(height)];
   };
 
   const getCurrentTime = (messageDate) => {
@@ -228,19 +256,14 @@ function ChatBox() {
 
 
   const formatMessage = (message) => {
-
-
       const [letterWidth, letterHeight] = getTextWidth(['a'])
       const lines = message.split("\n")
 
-    //  console.log(lines)
 
       const formattedMessage = [];
       let maxCounter = 0;
       lines.forEach((line) => {
           const words = line.split(' ');
-          console.log(words)
-          console.log(words)
           let lineCounter = 0;
           let currentLine = '';
 
@@ -256,25 +279,16 @@ function ChatBox() {
                   currentLine = ''
                   lineCounter = 0
 
-                  // console.log(word.length*letterWidth)
-                  // console.log(maxWidth)
                   const partLength = Math.floor(maxWidth/letterWidth);
                   const splitParts = []
                   for(let i = 0; i < word.length; i += partLength){
                     splitParts.push(word.slice(i, i+partLength))
                   }
-                  // console.log("Split Parts:")
-                  // console.log(splitParts)
                   for(let part of splitParts){
                     maxCounter = Math.max(part.length, maxCounter)
                     formattedMessage.push(part)
                   }
-                  
-                  // const firstWord = word.substring(0, partLength)
-                  // const secondWord = word.substring(partLength)
-                  // maxCounter = Math.max(partLength, maxCounter);
-                  // formattedMessage.push(firstWord.trim())
-                  // formattedMessage.push(secondWord.trim())
+
                   continue
 
               }
@@ -299,10 +313,9 @@ function ChatBox() {
           }
       })
 
-
-      // console.log(formattedMessage)
       return formattedMessage;
   };
+
 
 
   const handleMessageView = (messages) => {
@@ -330,6 +343,7 @@ function ChatBox() {
             backgroundColor: '#dcf8c6',
             alignSelf: 'flex-start',
             height: `${heightUnit}px`
+          //  height: 'auto'
         }
     };
 
@@ -339,7 +353,9 @@ function ChatBox() {
             backgroundColor: '#cce5ff',
             alignSelf: 'flex-end',
             justifySelf: 'right',
-            height: `${heightUnit}px`
+            height: `${heightUnit}px`,
+           // minHeight: '80%',
+
         }
     };
 
@@ -353,15 +369,15 @@ function ChatBox() {
     messages.forEach((message, index) => {
         
         const msgTextArray = formatMessage(message.content)
-       //  heightUnit =  (letterHeight*msgTextArray.length)
-        heightUnit =  letterHeight*(msgTextArray.length)
-        
+
         const [longestTextWidth, h] = getTextWidth(msgTextArray)
+
+        heightUnit =  letterHeight*(msgTextArray.length) + 5
         widthUnit = longestTextWidth + extraSpace
         
         const msgStyle = MsgStyle(widthUnit, heightUnit)
         const msgOtherStyle = MsgOtherStyle(widthUnit, heightUnit)
-        let classN = message.senderId === 1 ? msgStyle : msgOtherStyle
+        let classN = message.senderId === senderId ? msgStyle : msgOtherStyle
         const combinedDic = { ...msg, ...classN };
 
 
@@ -391,7 +407,6 @@ function ChatBox() {
 
         const topMargin = previousSender === message.senderId ? 25 : 0
 
-        console.log(msgTextArray)
         htmlElements.push(
             <div key={index} style={{...combinedDic, position: 'relative', marginTop: `${topMargin}px`}}>
                 {/* <p>{msgText}</p> */}
@@ -414,6 +429,7 @@ function ChatBox() {
 
     const newId = senderId === 1? 2 : 1
     setSenderId(newId)
+    setCurrentSender(userData[newId].username)
 
   };
 
@@ -424,17 +440,38 @@ function ChatBox() {
         {handleMessageView(messages)}
       </div>
       <div className="type-bar">
-        {/* <input type="text" value={messageText} onChange={handleMessageInput} /> */}
         <textarea      
          //   onKeyDown={handleMessageInput}
             rows={textareaRows} // Set rows to 1 to make it look like an input field
-            style={{ width: '100%', resize: 'none' }}
+            style={{ 
+              width: '80%',
+              resize: 'none',
+              position: 'absolute',
+              bottom: '0',
+              marginBottom: '10px'
+            }}
             placeholder="Type your message..."
             onChange={handleMessageInput}
-           // value={messageText}
+            value={messageText}
         />
-        <button onClick={handleSendMessage}>Send</button>
-        <button onClick={handleSenderChange}>Switch Sender</button>
+        <p style={{
+          position: 'absolute',
+          bottom: '47px',
+          left: '100px'
+        }}>{currentSender}</p>
+        <button style={{
+          width: '65px',
+          position: 'absolute',
+          bottom: '55px'
+          }} onClick={handleSenderChange}>Switch Sender</button>
+        <div style={{ position: 'absolute', right: '85px' }}>
+          <button style={{
+            position: 'absolute',
+            height: '36px',
+            bottom: '-90px',
+            right: '15px'
+            }} onClick={handleSendMessage}>Send</button>
+        </div>
       </div>
     </div>
   );
