@@ -9,7 +9,11 @@ function ChatBox(props) {
   const {senderId, setSenderId, receiverId, serReceiverId} = props
 
 
+  const chatListWidth = window.innerWidth*0.2
   const maxWidthPercentage = 0.7
+  const typeBarHeight = 100
+
+
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
   const [textareaRows, setTextareaRows] = useState(2);
@@ -28,6 +32,7 @@ function ChatBox(props) {
   // Testing purposes
   const [otherUser, SetOtherUser] = useState(2)
   const [currentSender, setCurrentSender] = useState('N/A')
+  const [shiftSender, setShiftSender] = useState(senderId)
 
 
 
@@ -405,7 +410,10 @@ function ChatBox(props) {
           )
         }
 
-        const topMargin = previousSender === message.senderId ? 25 : 0
+        let topMargin = 0
+        if(index > 0 && messages[index-1].senderId !== messages[index].senderId){
+          topMargin =  25 
+        }
 
         htmlElements.push(
             <div key={index} style={{...combinedDic, position: 'relative', marginTop: `${topMargin}px`}}>
@@ -427,15 +435,35 @@ function ChatBox(props) {
     // setSenderId(newId)
     // setSender(userData[newId].username);
 
-    const newId = senderId === 1? 2 : 1
-    setSenderId(newId)
-    setCurrentSender(userData[newId].username)
+    setShiftSender(shiftSender === senderId ? receiverId : senderId)
+    setSenderId(shiftSender)
+    setCurrentSender(userData[shiftSender].username)
 
   };
 
+  const chatBox = {
+    position: `absolute`,
+    marginLeft: `${chatListWidth}px`,
+    width: `${window.innerWidth-chatListWidth}px`,
+    boxShadow: `1px 1px 5px rgba(0, 0, 0, 0.1)`,
+    overflow: `hidden`
+}
+
+const chatBoxWindow = {
+    //height: `${window.innerHeight-typeBarHeight}px`,
+    height: `85vh`,
+    padding: `10px`,
+    display: `flex`,
+    overflowY: 'scroll',
+    flexDirection: `column`,
+    backgroundColor: `rgb(136, 182, 199)`,
+    scrollbarWidth: 'none'
+    
+}
+
   return (
-    <div className="chat-box">
-      <div className="chat-window">
+    <div style={chatBox}>
+      <div style={chatBoxWindow}>
         {handleMessageView(oldMessagesData)}
         {handleMessageView(messages)}
       </div>

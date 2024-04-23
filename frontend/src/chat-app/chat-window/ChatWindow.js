@@ -9,6 +9,8 @@ function ChatWindow() {
 
     const [senderId, setSenderId] = useState(1)
     const [receiverId, setReceiverId] = useState(1)
+    const [windowHeight, setWindowHeight] = useState(window.innerHeight)
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth)
 
     return (
         <div>

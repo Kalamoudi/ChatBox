@@ -10,6 +10,9 @@ function ChatList(props) {
     const [chats, setChats] = useState([])
     const [user, setUser] = useState({})
     const [receivers, setReceivers] = useState([])
+    const itemHeight = 200  
+    const windowHeight = window.innerHeight
+    const chatListWidth = window.innerWidth*0.2
   //  const senderId = 1
  //   console.log("SenderId in chatlist: " + senderId)
 
@@ -42,6 +45,9 @@ function ChatList(props) {
 
         fetchChats()
         fetechUserReceivers()
+
+        console.log("Window Height: " + window.innerHeight)
+        console.log("Window Width: " + window.innerWidth)
 
     },[])
 
@@ -102,11 +108,38 @@ function ChatList(props) {
 
     }
 
+    const chatList = {
+        boxSizing: `border-box`,
+        float: `left`,
+        width: `${chatListWidth}px`,
+        boxShadow: `1px 1px 5px rgba(0, 0, 0, 0.1)`,
+        overflow: `hidden`
+    }
+
+    const chatListWindow = {
+        //height: `${windowHeight}px`,
+        height: `97.5vh`,
+        padding: `10px`,
+        display: `flex`,
+        flexDirection: `column`,
+        backgroundColor: `rgb(119, 166, 183)`,
+        overflowY: 'scroll',
+        scrollbarWidth: 'none'
+    }
+
+    const chatListItem = {
+        height: `${itemHeight}px`,
+        padding: `10px`,
+        display: 'flex',
+        flexDirection: 'row',
+        borderRadius: `5px`, // border-radius changed to borderRadius
+        backgroundColor: `rgb(110, 145, 159)`
+    }
 
   return (
     <div>
-        <div className="chat-list">
-            <div className="chat-list-window">
+        <div style={chatList}>
+            <div style={chatListWindow}>
                 {handleChatsListView()}
 
             </div>
