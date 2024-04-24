@@ -6,6 +6,7 @@ const messageQuery = require('./queries/messages')
 const chatQuery = require('./queries/chats')
 const bodyParser = require('body-parser');
 const userQuery = require('./queries/users')
+const loginQuery = require('./queries/login')
 
 
 
@@ -49,6 +50,7 @@ chatQuery.getChatsBySenderId(app, connection)
 userQuery.getAllUsers(app, connection)
 userQuery.getUserById(app, connection)
 userQuery.getReceiverUsersBySenderId(app, connection)
+loginQuery.findUserInDb(app, connection)
 
 
 // Start the Express server

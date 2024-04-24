@@ -8,6 +8,7 @@ import FetchHorses from './FetchHorses';
 import BlockBreaker from './block-breaker/BlockBreaker';
 import ChatWindow from './chat-app/chat-window/ChatWindow'
 import ChatBox from './chat-app/chat-window/ChatBox';
+import ChatSignIn from './chat-app/chat-window/ChatSignIn';
 
 import './style.css';
 
@@ -28,7 +29,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/horses" element={<FetchHorses />} />
         <Route path="/game" element={<BlockBreaker />} />
         <Route path="/chatapp" element={<ChatWindow />} />
-        <Route path="/chatbox" element={<ChatBox />} />
+        <Route path="/chatapp/login" element={<ChatSignIn />} />
       </Routes>
     </Router>
   </React.StrictMode>,

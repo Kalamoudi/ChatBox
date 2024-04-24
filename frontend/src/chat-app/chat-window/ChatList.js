@@ -7,12 +7,16 @@ function ChatList(props) {
 
     const {senderId, setSenderId, receiverId, setReceiverId} = props
 
+    const chatListWidthFraction = 0.2
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+    const [windowHeight, setWindowHeight] = useState(window.innerHeight)
+    const [chatListWidth, setChatListWidth] = useState(window.innerWidth*chatListWidthFraction)
+
+
     const [chats, setChats] = useState([])
     const [user, setUser] = useState({})
     const [receivers, setReceivers] = useState([])
     const itemHeight = 200  
-    const windowHeight = window.innerHeight
-    const chatListWidth = window.innerWidth*0.2
   //  const senderId = 1
  //   console.log("SenderId in chatlist: " + senderId)
 
@@ -61,6 +65,26 @@ function ChatList(props) {
            console.log(receivers) 
         }
     }, [chats, user])
+
+    useEffect(() => {
+        const handleWindowResize = () => {
+            setWindowHeight(window.innerHeight);
+            setWindowWidth(window.innerWidth);
+            const chatLW = window.innerWidth * chatListWidthFraction;
+            setChatListWidth(chatLW);
+        };
+    
+        // Attach event listener to handle window resize
+        window.addEventListener('resize', handleWindowResize);
+    
+        handleWindowResize()
+    
+        // Cleanup function to remove event listener when component unmounts
+        return () => {
+            window.removeEventListener('resize', handleWindowResize);
+        };
+    }, []);
+
 
 
     const handleListItemClick = (receiver) => {

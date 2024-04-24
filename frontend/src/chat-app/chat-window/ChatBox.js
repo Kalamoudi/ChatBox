@@ -5,11 +5,13 @@ import axios from 'axios';
 
 function ChatBox(props) {
 
-
   const {senderId, setSenderId, receiverId, serReceiverId} = props
 
-
-  const chatListWidth = window.innerWidth*0.2
+  const chatListWidthFraction = 0.2
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+  const [windowHeight, setWindowHeight] = useState(window.innerHeight)
+  const [chatListWidth, setChatListWidth] = useState(window.innerWidth*chatListWidthFraction)
+  //const chatListWidth = window.innerWidth*0.2
   const maxWidthPercentage = 0.7
   const typeBarHeight = 100
 
@@ -17,7 +19,7 @@ function ChatBox(props) {
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
   const [textareaRows, setTextareaRows] = useState(2);
-  const [maxWidth, setMaxWidth] = useState(window.innerWidth*maxWidthPercentage)
+  const [maxWidth, setMaxWidth] = useState((window.innerWidth-chatListWidth)*maxWidthPercentage)
   const [userData, setUserData] = useState([]);
   //const [senderId, setSenderId] = useState(1)
   const [oldMessagesData, setOldMessagesData] = useState([])
@@ -47,8 +49,20 @@ function ChatBox(props) {
   } 
 
 
+  const handleMessageKeyDown = (e) => {
+
+    if(e.key === 'Enter' && !e.shiftKey ){
+      e.preventDefault();
+      handleSendMessage()
+      return
+    }
+
+  }
+
+
   const handleMessageInput = (e) => {
-    
+  
+
     setMessageText(e.target.value)
     
   }
@@ -156,6 +170,27 @@ function ChatBox(props) {
     }
 
   }, [messages])
+
+
+  useEffect(() => {
+    const handleWindowResize = () => {
+        setWindowHeight(window.innerHeight);
+        setWindowWidth(window.innerWidth);
+        const chatLW = window.innerWidth * chatListWidthFraction;
+        setChatListWidth(chatLW);
+        setMaxWidth((window.innerWidth - chatLW) * maxWidthPercentage);
+    };
+
+    // Attach event listener to handle window resize
+    window.addEventListener('resize', handleWindowResize);
+
+    handleWindowResize()
+
+    // Cleanup function to remove event listener when component unmounts
+    return () => {
+        window.removeEventListener('resize', handleWindowResize);
+    };
+}, []);
 
 
 
@@ -346,7 +381,7 @@ function ChatBox(props) {
         return {
             width: `${widthUnit}px`,
             backgroundColor: '#dcf8c6',
-            alignSelf: 'flex-start',
+            alignSelf: 'flex-end',
             height: `${heightUnit}px`
           //  height: 'auto'
         }
@@ -356,8 +391,8 @@ function ChatBox(props) {
         return{
             width: `${widthUnit}px`,
             backgroundColor: '#cce5ff',
-            alignSelf: 'flex-end',
-            justifySelf: 'right',
+            alignSelf: 'flex-start',
+            justifySelf: 'left',
             height: `${heightUnit}px`,
            // minHeight: '80%',
 
@@ -378,7 +413,14 @@ function ChatBox(props) {
         const [longestTextWidth, h] = getTextWidth(msgTextArray)
 
         heightUnit =  letterHeight*(msgTextArray.length) + 5
+
         widthUnit = longestTextWidth + extraSpace
+        if(msgTextArray.length > 1){
+          widthUnit =  longestTextWidth + letterWidth*2
+          heightUnit += letterHeight*4
+
+        }
+        
         
         const msgStyle = MsgStyle(widthUnit, heightUnit)
         const msgOtherStyle = MsgOtherStyle(widthUnit, heightUnit)
@@ -390,10 +432,16 @@ function ChatBox(props) {
         const formattedTime = getCurrentTime(message.date);
         const [timeTextWidth, timeTextHeight] = getTextWidth([formattedTime])
 
+
         let timePosX = timeTextWidth*(formattedTime.length + 2)
         let timePosY = msgTextArray.length
         timePosX = 20
         timePosY = letterHeight*(msgTextArray.length-1) + 1
+
+        if(msgTextArray.length > 1){
+          timePosY = letterHeight*(msgTextArray.length+1.5) +1
+
+        }
     
         let showDate = previousDate
         const newDate = message.date.slice(0, 10)
@@ -438,20 +486,21 @@ function ChatBox(props) {
     setShiftSender(shiftSender === senderId ? receiverId : senderId)
     setSenderId(shiftSender)
     setCurrentSender(userData[shiftSender].username)
+    console.log(window.innerWidth)
 
   };
 
   const chatBox = {
     position: `absolute`,
     marginLeft: `${chatListWidth}px`,
-    width: `${window.innerWidth-chatListWidth}px`,
+    width: `${windowWidth-chatListWidth}px`,
     boxShadow: `1px 1px 5px rgba(0, 0, 0, 0.1)`,
     overflow: `hidden`
 }
 
 const chatBoxWindow = {
     //height: `${window.innerHeight-typeBarHeight}px`,
-    height: `85vh`,
+    height: `82.5vh`,
     padding: `10px`,
     display: `flex`,
     overflowY: 'scroll',
@@ -481,6 +530,7 @@ const chatBoxWindow = {
             placeholder="Type your message..."
             onChange={handleMessageInput}
             value={messageText}
+            onKeyDown={handleMessageKeyDown}
         />
         <p style={{
           position: 'absolute',

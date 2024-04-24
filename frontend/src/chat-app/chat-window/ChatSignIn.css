@@ -1,0 +1,28 @@
+
+.login-form-window {
+    position: absolute;
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 500px;
+    margin-right: 500px;
+    transform: translate(-50%, -50%);
+    background-color: rgb(146, 182, 194)
+}
+
+.text-above-fields {
+
+    margin-bottom: 5px;
+    padding-left: 2px;
+}
+
+
+.sign-in-button {
+    left: 50%;
+    width: 200px;
+    height: 28px
+}
+
+.forgot-password {
+    align-items: end;
+}
+
