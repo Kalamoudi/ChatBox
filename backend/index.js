@@ -7,6 +7,8 @@ const chatQuery = require('./queries/chats')
 const bodyParser = require('body-parser');
 const userQuery = require('./queries/users')
 const loginQuery = require('./queries/login')
+const registerQuery = require ('./queries/register')
+const session = require('express-session');
 
 
 
@@ -15,6 +17,11 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(bodyParser.json())
+app.use(session({
+    secret: 'your_secret_key',
+    resave: false,
+    saveUninitialized: false
+}));
 
 // MySQL connection configuration
 const connection = mysql.createConnection({
@@ -51,6 +58,8 @@ userQuery.getAllUsers(app, connection)
 userQuery.getUserById(app, connection)
 userQuery.getReceiverUsersBySenderId(app, connection)
 loginQuery.findUserInDb(app, connection)
+registerQuery.findAccount(app, connection)
+registerQuery.createAccount(app, connection)
 
 
 // Start the Express server

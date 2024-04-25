@@ -27,9 +27,13 @@
     position: relative;
     /* padding: 10px; */
     /* border-top: 1px solid #ccc; */
-    background-color: rgb(111, 155, 171);
+    /* background-color: rgb(111, 155, 171); */
+    background-color: rgb(119, 166, 183);
   }
   
+  .test {
+    align-items: start;
+  }
   .type-bar input {
     flex: 1;
     padding: 5px;

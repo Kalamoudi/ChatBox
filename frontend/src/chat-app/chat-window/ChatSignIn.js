@@ -27,7 +27,7 @@ function ChatSignIn(props) {
                 body: JSON.stringify({ email, password}),
             });
             const data = await response.json();
-
+            console.log(data)
             setSenderId(data.user.user_id)
 
         } catch (error){
@@ -36,20 +36,53 @@ function ChatSignIn(props) {
     }
 
 
+    useEffect(() => {
+        const handleWindowResize = () => {
+            setWindowHeight(window.innerHeight);
+            setWindowWidth(window.innerWidth);
+        };
+    
+        // Attach event listener to handle window resize
+        window.addEventListener('resize', handleWindowResize);
+    
+        handleWindowResize()
+    
+        // Cleanup function to remove event listener when component unmounts
+        return () => {
+            window.removeEventListener('resize', handleWindowResize);
+        };
+    }, []);
+
 
 
     // Create a userpage that is called if user never logged in
     // User can either sign in or create an account
 
 
+    // const loginFormWindow = {
+    //     position: `absolute`,
+    //     display: `flex`,
+    //     transform: `translate(-50%, -50%)`,
+    //     left: `50%`,
+    //     bottom: `33%`,
+    //     backgroundColor: `rgb(146, 182, 194)`,
+    //     padding: `18px`,
+    //     borderRadius: `5px`
+
+    //     //marginTop: `400px`,
+    //     //marginLeft: `200px`
+    // }
+
     const loginFormWindow = {
         position: `absolute`,
         display: `flex`,
         transform: `translate(-50%, -50%)`,
-        left: `50%`,
-        bottom: `33%`,
+        //left: `${windowWidth}`,
+        left: `${windowWidth*0.5}px`,
+        top: `${windowHeight*0.35}px`,
         backgroundColor: `rgb(146, 182, 194)`,
         padding: `18px`,
+        height: `300px`,
         borderRadius: `5px`
 
         //marginTop: `400px`,
@@ -71,6 +104,17 @@ function ChatSignIn(props) {
         fontSize: `11px`,
         justifyContent: `right`,
         left: `118px`
+    }
+
+    const createAccount = {
+        display: 'flex',
+        position: 'relative',
+        marginTop: `15px`,
+        fontSize: `16px`,
+        top: `15px`,
+        left: `50%`,
+        transform: `translate(-35%, -15%)`
+
     }
 
 
@@ -98,7 +142,7 @@ function ChatSignIn(props) {
                             onChange={(e) => setPassword(e.target.value)} 
                         />
                         <br/>
-                        <a href="./forgot-password" style={forgotPassword}>Forgot Password</a>
+                        <a href="chatapp/forgot-password" style={forgotPassword}>Forgot Password</a>
                     </div>
 
                     <button 
@@ -106,6 +150,10 @@ function ChatSignIn(props) {
                         style={{marginTop: `15px`}}
                         type="submit">Sign in
                     </button>
+                    <br/>
+                    <a  href="chatapp/register" 
+                        style={createAccount}
+                    >Create new account</a>
                 </form>
             </div>
 

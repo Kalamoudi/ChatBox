@@ -364,7 +364,7 @@ function ChatBox(props) {
     const [letterWidth, letterHeight] = getTextWidth(['A'])
     let widthUnit = 1
     let heightUnit = 1
-    const extraSpace = letterWidth*11
+    const extraSpace = letterWidth*8
 
     const msg = {
         margin: `4px`,
@@ -416,8 +416,8 @@ function ChatBox(props) {
 
         widthUnit = longestTextWidth + extraSpace
         if(msgTextArray.length > 1){
-          widthUnit =  longestTextWidth + letterWidth*2
-          heightUnit += letterHeight*4
+          widthUnit =  Math.max(extraSpace, longestTextWidth + letterWidth*2)
+          heightUnit += letterHeight + 25
 
         }
         
@@ -439,7 +439,7 @@ function ChatBox(props) {
         timePosY = letterHeight*(msgTextArray.length-1) + 1
 
         if(msgTextArray.length > 1){
-          timePosY = letterHeight*(msgTextArray.length+1.5) +1
+          timePosY = letterHeight*(msgTextArray.length+1) +1
 
         }
     
@@ -467,7 +467,7 @@ function ChatBox(props) {
             <div key={index} style={{...combinedDic, position: 'relative', marginTop: `${topMargin}px`}}>
                 {/* <p>{msgText}</p> */}
                 <p style={{whiteSpace: 'pre-wrap'}}>{msgTextArray.map((line, index) => <span key={index}>{line}<br /></span>)}</p>
-                <p style={{ color: 'grey', fontSize: '12px', position: 'absolute', top: timePosY, right: timePosX }}>{formattedTime}</p>
+                <p style={{ color: 'grey', fontSize: '12px', position: 'absolute', bottom: -10, right: 10 }}>{formattedTime}</p>
             </div>
         )
 
@@ -516,40 +516,45 @@ const chatBoxWindow = {
         {handleMessageView(oldMessagesData)}
         {handleMessageView(messages)}
       </div>
+
       <div className="type-bar">
-        <textarea      
-         //   onKeyDown={handleMessageInput}
-            rows={textareaRows} // Set rows to 1 to make it look like an input field
-            style={{ 
-              width: '80%',
-              resize: 'none',
+        <div style={{display: 'flex', alignItems: 'flex-end'}}>
+          <textarea      
+          //   onKeyDown={handleMessageInput}
+              rows={textareaRows} // Set rows to 1 to make it look like an input field
+              style={{ 
+                width: `${windowWidth*(1-0.2)-chatListWidth}px`,
+                resize: 'none',
+                position: 'absolute',
+                bottom: '0',
+                marginBottom: '10px'
+              }}
+              placeholder="Type your message..."
+              onChange={handleMessageInput}
+              value={messageText}
+              onKeyDown={handleMessageKeyDown}
+          />
+          <button style={{
               position: 'absolute',
-              bottom: '0',
-              marginBottom: '10px'
-            }}
-            placeholder="Type your message..."
-            onChange={handleMessageInput}
-            value={messageText}
-            onKeyDown={handleMessageKeyDown}
-        />
+              left: `${windowWidth*(1-0.2)-chatListWidth}px`,
+              bottom: '10px',
+              height: '36px',
+              }} onClick={handleSendMessage}>Send</button>
+          </div>
         <p style={{
           position: 'absolute',
           bottom: '47px',
           left: '100px'
         }}>{currentSender}</p>
+
         <button style={{
           width: '65px',
           position: 'absolute',
           bottom: '55px'
           }} onClick={handleSenderChange}>Switch Sender</button>
-        <div style={{ position: 'absolute', right: '85px' }}>
-          <button style={{
-            position: 'absolute',
-            height: '36px',
-            bottom: '-90px',
-            right: '15px'
-            }} onClick={handleSendMessage}>Send</button>
-        </div>
+
+
+
       </div>
     </div>
   );

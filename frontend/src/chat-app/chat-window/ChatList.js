@@ -55,17 +55,19 @@ function ChatList(props) {
 
     },[])
 
-    useEffect(() => {
-        if(chats.length > 0){
-            console.log("Chats:")
-            console.log(chats)
-        }
-        if(receivers.length > 0){
-            console.log("Receivers:")
-           console.log(receivers) 
-        }
-    }, [chats, user])
+    //Console logs
+    // useEffect(() => {
+    //     if(chats.length > 0){
+    //         console.log("Chats:")
+    //         console.log(chats)
+    //     }
+    //     if(receivers.length > 0){
+    //         console.log("Receivers:")
+    //        console.log(receivers) 
+    //     }
+    // }, [chats, user])
 
+    // Handles resizing of components when window changes size
     useEffect(() => {
         const handleWindowResize = () => {
             setWindowHeight(window.innerHeight);
