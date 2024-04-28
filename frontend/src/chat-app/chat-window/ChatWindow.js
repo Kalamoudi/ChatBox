@@ -6,6 +6,7 @@ import ChatBox from './ChatBox';
 import ChatList from './ChatList';
 import ChatSignIn from './ChatSignIn';
 import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
 
 function ChatWindow() {
 
@@ -14,6 +15,7 @@ function ChatWindow() {
     const [receiverId, setReceiverId] = useState(1)
     const [windowHeight, setWindowHeight] = useState(window.innerHeight)
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+    const [sessionExist, setSessionExist] = useState(false)
 
     const navigate = useNavigate();
 
@@ -27,10 +29,28 @@ function ChatWindow() {
     // Create a userpage that is called if user never logged in
     // User can either sign in or create an account
 
+
+    useEffect(() => {
+        const checkCookie = () => {
+
+
+            if(Cookies.get('loginInfo') !== undefined){
+                setSenderId(parseInt(Cookies.get('loginInfo')))
+                setSessionExist(true)
+            }
+            
+        }
+        checkCookie()
+
+    },[senderId])
+
     const handleView = () => {
 
         const htmlElements = []
-        if(senderId > 0){
+
+
+      //   if(senderId > 0){
+        if(sessionExist === true){
             htmlElements.push(
                 <div>
                     <ChatList senderId={senderId} setSenderId={setSenderId} receiverId={receiverId} setReceiverId={setReceiverId}/>
@@ -45,9 +65,10 @@ function ChatWindow() {
                         setSenderId={setSenderId} 
                     />
 
-              </div>
+            </div>
             )
         }
+
 
         return htmlElements
 

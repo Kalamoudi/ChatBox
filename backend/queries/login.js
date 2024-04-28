@@ -1,4 +1,11 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+
+
+const generateAccessToken = (user) => {
+    return jwt.sign(user, 'itta7annoon', { expiresIn: '1h' }); // Adjust expiration time as needed
+  };
 
 const findUserInDb = (app, connection) => {
 
@@ -25,9 +32,13 @@ const findUserInDb = (app, connection) => {
                         if (err || !isMatch){
                             res.status(401).send('Invalid email or Password');
                         } else{
-                            req.session.userId = result[0].user_id
+                         //   req.session.userId = result[0].user_id
+                            const accessToken = generateAccessToken({ id: result[0].user_id, username: result[0].username });
+                            res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: 3600000, secure: false }); // Set cookie to expire in 1 hour
+                           // console.log(req.session)
+    
                           //  res.send('Logged in Successfully')
-                            res.json({ user: result[0] });
+                          res.json({success: true, message: 'Login successful', user: result[0] });
                         }
 
                     });

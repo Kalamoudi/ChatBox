@@ -5,8 +5,9 @@ const getMessagesBySenderIdAndReceiverId = (app, connection) => {
         const queryString = `
         SELECT * 
         FROM ${tableName} 
-        WHERE (senderId=${senderId} AND receiverId=${receiverId})
-        OR (senderId=${receiverId} AND receiverId=${senderId})`;
+        WHERE (senderId=${senderId} AND receiverId=${receiverId}) OR (senderId=${receiverId} AND receiverId=${senderId})
+        ORDER BY date ASC
+        `;
         // Execute the query
         connection.query(queryString, (err, result) => {
             if (err) {
@@ -47,7 +48,8 @@ const postMessagesBySenderIdAndReceiverId = (app, connection) => {
 
     app.post('/chatbox/messages', async (req, res) => {
         try {
-            const { senderId, receiverId, content, date } = req.body;
+            //const { senderId, receiverId, content, date } = req.body;
+            const {senderId, receiverId, content, date} = req.body
 
             const queryString = `
                 INSERT INTO messages (senderId, receiverId, content, date)
@@ -61,7 +63,7 @@ const postMessagesBySenderIdAndReceiverId = (app, connection) => {
                     console.error('Error saving message:', err);
                     res.status(500).json({ error: 'An error occurred while saving the message' });
                 } else {
-                    console.log('Message saved successfully');
+                  //  console.log('Message saved successfully');
                     res.status(201).json({ message: 'Message saved successfully' });
                 }
             });
@@ -72,7 +74,10 @@ const postMessagesBySenderIdAndReceiverId = (app, connection) => {
         }
     
     })
+
 }
+
+
 
 module.exports = {
     getMessagesBySenderIdAndReceiverId,

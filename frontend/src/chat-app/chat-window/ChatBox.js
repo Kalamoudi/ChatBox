@@ -28,7 +28,13 @@ function ChatBox(props) {
   let previousDate = ""
   const [previousSender, setPreviousSender] = useState(1)
   const [linesCount, setLinesCount] = useState(0)
+  const [newMessage, setNewMessage] = useState(0)
+  let pewpew = 0
   let textRows = 1
+
+  const [renderedMessages, setRenderedMessages] = useState(null)
+
+  const chatBoxRef = useRef(null)
   
 
   // Testing purposes
@@ -91,7 +97,7 @@ function ChatBox(props) {
     });
   }
 
-  // Fetch data
+ // Fetch data
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -120,16 +126,31 @@ function ChatBox(props) {
         const endpoint = `http://localhost:5000/chatbox/messages/${senderId}/${receiverId}`
         const response = await axios.get(endpoint)
 
-        const sortedOldMessagesData = response.data.sort((a, b) => a.ID - b.ID)
-        setOldMessagesData(sortedOldMessagesData)
+        
+        // console.log("length in fetch: " + sortedOldMessagesData.length)
+        // console.log("pewpew: " + pewpew)
+        
+        if(response.data && response.data.length > pewpew){
+          pewpew = response.data.length
+          const sortedOldMessagesData = response.data.sort((a, b) => a.ID - b.ID)
+          setRenderedMessages(handleMessageView(sortedOldMessagesData))
+         // chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+        }
+    
+
 
       } catch(error){
         console.error('Error fetching chat information', error)
+      } finally {
+        setTimeout(fetchMessages, 0)
       }
     };
 
-      fetchUser();
+      //fetchUser();
       fetchMessages();
+      setMessages([])
+      setOldMessagesData([])
+     // chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
   }, [receiverId]);
 
 
@@ -173,6 +194,17 @@ function ChatBox(props) {
 
 
   useEffect(() => {
+    chatBoxRef.current.scrollTo({
+      top: chatBoxRef.current.scrollHeight,
+      behavior: 'instant'
+    });
+  }, [renderedMessages]);
+
+
+
+
+ // Resizing window
+  useEffect(() => {
     const handleWindowResize = () => {
         setWindowHeight(window.innerHeight);
         setWindowWidth(window.innerWidth);
@@ -191,6 +223,10 @@ function ChatBox(props) {
         window.removeEventListener('resize', handleWindowResize);
     };
 }, []);
+
+
+
+
 
 
 
@@ -225,7 +261,7 @@ function ChatBox(props) {
 
       
       setMessageText('');
-      setTextareaRows(1);
+      setTextareaRows(2);
       handlePost(messageText)
       
 
@@ -374,7 +410,8 @@ function ChatBox(props) {
         display: 'flex',
         borderRadius: `5px`, // border-radius changed to borderRadius
         alignItems: 'center',
-        overflow: 'visible'
+        overflow: 'visible',
+        
     }
 
     const MsgStyle = (widthUnit, heightUnit) => {
@@ -495,7 +532,7 @@ function ChatBox(props) {
     marginLeft: `${chatListWidth}px`,
     width: `${windowWidth-chatListWidth}px`,
     boxShadow: `1px 1px 5px rgba(0, 0, 0, 0.1)`,
-    overflow: `hidden`
+    overflow: `hidden`,
 }
 
 const chatBoxWindow = {
@@ -506,15 +543,28 @@ const chatBoxWindow = {
     overflowY: 'scroll',
     flexDirection: `column`,
     backgroundColor: `rgb(136, 182, 199)`,
-    scrollbarWidth: 'none'
-    
+    scrollbarWidth: 'none', 
+    scrollBehavior: 'smooth',
 }
+
+
+const scrollDown = () => {
+  chatBoxRef.current.scrollTo({
+    top: chatBoxRef.current.scrollHeight+999999,
+    behavior: 'instant'
+  });
+}
+
+
 
   return (
     <div style={chatBox}>
-      <div style={chatBoxWindow}>
-        {handleMessageView(oldMessagesData)}
-        {handleMessageView(messages)}
+      <div style={chatBoxWindow} ref={chatBoxRef}>
+        {/* {handleMessageView(oldMessagesData)} */}
+        {renderedMessages}
+        {/* {newMessage} */}
+        {/* {handleMessageView(messages)}  */}
+        {/* {handleMessageView(newMessage)} */}
       </div>
 
       <div className="type-bar">

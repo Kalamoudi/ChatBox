@@ -1,27 +1,33 @@
 const express = require('express');
+const session = require('express-session');
 const mysql = require('mysql');
 const cors = require('cors');
+const socketIo = require('socket.io');
 const app = express();
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+
+
 const messageQuery = require('./queries/messages')
 const chatQuery = require('./queries/chats')
 const bodyParser = require('body-parser');
 const userQuery = require('./queries/users')
 const loginQuery = require('./queries/login')
 const registerQuery = require ('./queries/register')
-const session = require('express-session');
 
 
 
 
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(bodyParser.json())
-app.use(session({
-    secret: 'your_secret_key',
-    resave: false,
-    saveUninitialized: false
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
 }));
+
+app.use(bodyParser.json());
+app.use(cookieParser());
+
 
 // MySQL connection configuration
 const connection = mysql.createConnection({
@@ -41,13 +47,6 @@ connection.connect((err) => {
     }
     console.log('Connected to MySQL database as id', connection.threadId);
 });
-
-
-app.use((req, res, next) => {
-    req.db = connection;
-    next();
-});
-
 
 
 messageQuery.getMessagesBySenderIdAndReceiverId(app, connection)

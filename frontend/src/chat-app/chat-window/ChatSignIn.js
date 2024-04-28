@@ -4,6 +4,7 @@ import ClipboardPaste from '../../clipboardCopyPaste/clipboardPaste'
 import axios from 'axios';
 import ChatBox from './ChatBox';
 import ChatList from './ChatList';
+import Cookies from 'js-cookie';
 
 function ChatSignIn(props) {
 
@@ -27,7 +28,12 @@ function ChatSignIn(props) {
                 body: JSON.stringify({ email, password}),
             });
             const data = await response.json();
+
             console.log(data)
+            console.log(response.headers)
+            if(Cookies.get('loginInfo') === undefined){
+                Cookies.set('loginInfo', data.user.user_id);
+            }
             setSenderId(data.user.user_id)
 
         } catch (error){
