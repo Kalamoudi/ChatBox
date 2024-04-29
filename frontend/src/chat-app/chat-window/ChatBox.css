@@ -73,3 +73,21 @@
     font-weight: bold;
     font-size: 11px;
   }
+
+  .chatbox-window {
+    height: 82.5vh;
+    padding: 10px;
+    display: flex;
+    overflow-y: scroll;
+    flex-direction: column;
+    background-color: rgb(136, 182, 199);
+    scrollbar-width: none;
+    scroll-behavior: smooth;
+  }
+
+  .chatbox {
+    position: absolute;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+

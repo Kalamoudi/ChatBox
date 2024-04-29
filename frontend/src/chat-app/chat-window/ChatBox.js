@@ -32,7 +32,10 @@ function ChatBox(props) {
   let pewpew = 0
   let textRows = 1
 
+
+
   const [renderedMessages, setRenderedMessages] = useState(null)
+  const [renderMessageBox, setRenderMessageBox] = useState(null)
 
   const chatBoxRef = useRef(null)
   
@@ -126,14 +129,17 @@ function ChatBox(props) {
         const endpoint = `http://localhost:5000/chatbox/messages/${senderId}/${receiverId}`
         const response = await axios.get(endpoint)
 
+
         
         // console.log("length in fetch: " + sortedOldMessagesData.length)
         // console.log("pewpew: " + pewpew)
         
         if(response.data && response.data.length > pewpew){
           pewpew = response.data.length
-          const sortedOldMessagesData = response.data.sort((a, b) => a.ID - b.ID)
-          setRenderedMessages(handleMessageView(sortedOldMessagesData))
+    //     const sortedOldMessagesData = response.data.sort((a, b) => a.ID - b.ID)
+          setMessageText('');
+          setRenderedMessages(handleMessageView(response.data))
+          
          // chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
         }
     
@@ -146,6 +152,7 @@ function ChatBox(props) {
       }
     };
 
+      
       //fetchUser();
       fetchMessages();
       setMessages([])
@@ -156,12 +163,12 @@ function ChatBox(props) {
 
 
   // handle events after data is fetched
-  useEffect(() => {  
-    if(oldMessagesData.length > 1){
-      setPreviousSender(oldMessagesData[oldMessagesData.length-1].senderId)
+  // useEffect(() => {  
+  //   if(oldMessagesData.length > 1){
+  //     setPreviousSender(oldMessagesData[oldMessagesData.length-1].senderId)
     
-    }
-  }, [oldMessagesData]);
+  //   }
+  // }, [oldMessagesData]);
 
   // handles text bar size
   useEffect(() => {
@@ -182,17 +189,18 @@ function ChatBox(props) {
   }, [messageText])
 
   // handle text bar value
-  useEffect(() => {
-    // setMessageText('')
-    // setTextareaRows(2)
+  // useEffect(() => {
+  //   // setMessageText('')
+  //   // setTextareaRows(2)
 
-    if(messages.length > 0){
-      setPreviousSender(messages[messages.length-1].senderId)
-    }
+  //   if(messages.length > 0){
+  //     setPreviousSender(messages[messages.length-1].senderId)
+  //   }
 
-  }, [messages])
+  // }, [messages])
 
 
+  // Scrolls to the bottom of the chat window
   useEffect(() => {
     chatBoxRef.current.scrollTo({
       top: chatBoxRef.current.scrollHeight,
@@ -257,11 +265,11 @@ function ChatBox(props) {
       }
 
       //setMessages([...messages, { text: messageText, sender: senderId }]);
-      setMessages(prev => [...prev, newMessageEntry])
+    //  setMessages(prev => [...prev, newMessageEntry])
 
       
-      setMessageText('');
-      setTextareaRows(2);
+      //setMessageText('');
+      //setTextareaRows(2);
       handlePost(messageText)
       
 
@@ -528,24 +536,24 @@ function ChatBox(props) {
   };
 
   const chatBox = {
-    position: `absolute`,
+   // position: `absolute`,
     marginLeft: `${chatListWidth}px`,
     width: `${windowWidth-chatListWidth}px`,
-    boxShadow: `1px 1px 5px rgba(0, 0, 0, 0.1)`,
-    overflow: `hidden`,
+    // boxShadow: `1px 1px 5px rgba(0, 0, 0, 0.1)`,
+    // overflow: `hidden`,
 }
 
-const chatBoxWindow = {
-    //height: `${window.innerHeight-typeBarHeight}px`,
-    height: `82.5vh`,
-    padding: `10px`,
-    display: `flex`,
-    overflowY: 'scroll',
-    flexDirection: `column`,
-    backgroundColor: `rgb(136, 182, 199)`,
-    scrollbarWidth: 'none', 
-    scrollBehavior: 'smooth',
-}
+// const chatBoxWindow = {
+//     //height: `${window.innerHeight-typeBarHeight}px`,
+//     height: `82.5vh`,
+//     padding: `10px`,
+//     display: `flex`,
+//     overflowY: 'scroll',
+//     flexDirection: `column`,
+//     backgroundColor: `rgb(136, 182, 199)`,
+//     scrollbarWidth: 'none', 
+//     scrollBehavior: 'smooth',
+// }
 
 
 const scrollDown = () => {
@@ -556,19 +564,12 @@ const scrollDown = () => {
 }
 
 
+const handleMessageBar = () => {
 
-  return (
-    <div style={chatBox}>
-      <div style={chatBoxWindow} ref={chatBoxRef}>
-        {/* {handleMessageView(oldMessagesData)} */}
-        {renderedMessages}
-        {/* {newMessage} */}
-        {/* {handleMessageView(messages)}  */}
-        {/* {handleMessageView(newMessage)} */}
-      </div>
+  const htmlElements = []
 
-      <div className="type-bar">
-        <div style={{display: 'flex', alignItems: 'flex-end'}}>
+  htmlElements.push(
+    <div style={{display: 'flex', alignItems: 'flex-end'}}>
           <textarea      
           //   onKeyDown={handleMessageInput}
               rows={textareaRows} // Set rows to 1 to make it look like an input field
@@ -591,21 +592,32 @@ const scrollDown = () => {
               height: '36px',
               }} onClick={handleSendMessage}>Send</button>
           </div>
-        <p style={{
-          position: 'absolute',
-          bottom: '47px',
-          left: '100px'
-        }}>{currentSender}</p>
+      )
 
-        <button style={{
-          width: '65px',
-          position: 'absolute',
-          bottom: '55px'
-          }} onClick={handleSenderChange}>Switch Sender</button>
+      return htmlElements
+}
 
 
+
+
+
+
+  return (
+    <div className='chatbox' style={chatBox}>
+      <div className='chatbox-window' ref={chatBoxRef}>
+        {/* {handleMessageView(oldMessagesData)} */}
+        {renderedMessages}
+        {/* {newMessage} */}
+        {/* {handleMessageView(messages)}  */}
+        {/* {handleMessageView(newMessage)} */}
+      </div>
+      <div className="type-bar">
+        {handleMessageBar()}
 
       </div>
+         
+
+ 
     </div>
   );
 }

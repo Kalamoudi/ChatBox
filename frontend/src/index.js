@@ -26,10 +26,10 @@ createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Router>
       <Routes>
-        <Route path="/" element={<Product />} />
+        <Route path="/dots" element={<Product />} />
         <Route path="/horses" element={<FetchHorses />} />
         <Route path="/game" element={<BlockBreaker />} />
-        <Route path="/chatapp" element={<ChatWindow />} />
+        <Route path="/" element={<ChatWindow />} />
         <Route path="/chatapp/login" element={<ChatSignIn />} />
         <Route path="/chatapp/register" element={<ChatSignUp />} />
       </Routes>

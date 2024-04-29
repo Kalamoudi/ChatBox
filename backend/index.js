@@ -21,7 +21,8 @@ const registerQuery = require ('./queries/register')
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-    origin: 'http://localhost:3000',
+    //origin: ['http://localhost:3000', 'http://192.168.100.42:3000'],
+    origin: '*',
     credentials: true
 }));
 
@@ -62,6 +63,6 @@ registerQuery.createAccount(app, connection)
 
 
 // Start the Express server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
