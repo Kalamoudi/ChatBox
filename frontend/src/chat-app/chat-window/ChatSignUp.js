@@ -5,6 +5,7 @@ import axios from 'axios';
 import ChatBox from './ChatBox';
 import ChatList from './ChatList';
 import { useNavigate } from 'react-router-dom';
+import { apiBaseUrl } from './ApiConfig';
 
 function ChatSignUp(props) {
 
@@ -25,7 +26,7 @@ function ChatSignUp(props) {
      
         e.preventDefault();
         try{
-            const response = await fetch('http://localhost:5000/chatbox/register/check', {
+            const response = await fetch(`${apiBaseUrl}/register/check`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',                    
@@ -46,7 +47,7 @@ function ChatSignUp(props) {
 
     const handleAccountCreation = async () => {
         try{
-            const response = await fetch('http://localhost:5000/chatbox/register/create', {
+            const response = await fetch(`${apiBaseUrl}/register/create`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

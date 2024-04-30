@@ -5,6 +5,8 @@ import axios from 'axios';
 import ChatBox from './ChatBox';
 import ChatList from './ChatList';
 import Cookies from 'js-cookie';
+import { apiBaseUrl } from './ApiConfig';
+import ChatSignUp from './ChatSignUp';
 
 function ChatSignIn(props) {
 
@@ -20,7 +22,7 @@ function ChatSignIn(props) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try{
-            const response = await fetch('http://localhost:5000/chatbox/login', {
+            const response = await fetch(`${apiBaseUrl}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',                    
@@ -160,6 +162,9 @@ function ChatSignIn(props) {
                     <a  href="chatapp/register" 
                         style={createAccount}
                     >Create new account</a>
+                    {/* <a  onClick={()=> <ChatSignUp />} 
+                        style={createAccount}
+                    >Create new account</a> */}
                 </form>
             </div>
 

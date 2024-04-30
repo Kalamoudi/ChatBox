@@ -32,7 +32,7 @@
   }
   
   .test {
-    align-items: start;
+    align-items: top;
   }
   .type-bar input {
     flex: 1;

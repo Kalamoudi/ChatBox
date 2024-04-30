@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './ChatBox.css';
-import ClipboardPaste from '../../clipboardCopyPaste/clipboardPaste'
 import axios from 'axios';
+import { apiBaseUrl } from './ApiConfig';
 
 function ChatBox(props) {
 
@@ -11,51 +11,30 @@ function ChatBox(props) {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth)
   const [windowHeight, setWindowHeight] = useState(window.innerHeight)
   const [chatListWidth, setChatListWidth] = useState(window.innerWidth*chatListWidthFraction)
-  //const chatListWidth = window.innerWidth*0.2
+
   const maxWidthPercentage = 0.7
   const typeBarHeight = 100
 
 
-  const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
   const [textareaRows, setTextareaRows] = useState(2);
   const [maxWidth, setMaxWidth] = useState((window.innerWidth-chatListWidth)*maxWidthPercentage)
-  const [userData, setUserData] = useState([]);
-  //const [senderId, setSenderId] = useState(1)
-  const [oldMessagesData, setOldMessagesData] = useState([])
-  const [oldMessages, setOldMessages] = useState([])
-  //const [previousDate, setPreviousDate] = useState("")
+
   let previousDate = ""
-  const [previousSender, setPreviousSender] = useState(1)
-  const [linesCount, setLinesCount] = useState(0)
-  const [newMessage, setNewMessage] = useState(0)
-  let pewpew = 0
-  let textRows = 1
+  let currentMessagesSize = 0
 
 
 
   const [renderedMessages, setRenderedMessages] = useState(null)
-  const [renderMessageBox, setRenderMessageBox] = useState(null)
 
   const chatBoxRef = useRef(null)
   
 
   // Testing purposes
-  const [otherUser, SetOtherUser] = useState(2)
-  const [currentSender, setCurrentSender] = useState('N/A')
   const [shiftSender, setShiftSender] = useState(senderId)
 
 
 
-
-  const handleOldMessages = () => {
-    const newArray = []
-    oldMessagesData.forEach((data) => { 
-      newArray.push({text: data.content, sender: data.senderId})
-    })
-
-    setOldMessages(newArray)
-  } 
 
 
   const handleMessageKeyDown = (e) => {
@@ -91,7 +70,7 @@ function ChatBox(props) {
       date: mySqlDate,
     };
 
-    await fetch(`http://localhost:5000/chatbox/messages`, {
+    await fetch(`${apiBaseUrl}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -102,31 +81,10 @@ function ChatBox(props) {
 
  // Fetch data
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        // Make a GET request to the backend API endpoint
-        const response = await axios.get('http://localhost:5000/chatbox/users');
-        // Set the fetched data to the state
-       // setUserData(response.data);
-        const users = response.data
-        const dictionary = {}
-        for (let user of users) {
-          const key = user.user_id
-          if (!(key in dictionary)) { // Wrap the condition in parentheses
-            dictionary[key] = user;
-          }
-        }
-        setUserData(dictionary)
-  
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-      
-    };
-
     const fetchMessages = async () => {
       try{
-        const endpoint = `http://localhost:5000/chatbox/messages/${senderId}/${receiverId}`
+       // const endpoint = `http://localhost:5000/chatbox/messages/${senderId}/${receiverId}`
+       const endpoint = `${apiBaseUrl}/messages/${senderId}/${receiverId}`
         const response = await axios.get(endpoint)
 
 
@@ -134,13 +92,13 @@ function ChatBox(props) {
         // console.log("length in fetch: " + sortedOldMessagesData.length)
         // console.log("pewpew: " + pewpew)
         
-        if(response.data && response.data.length > pewpew){
-          pewpew = response.data.length
+        if(response.data && response.data.length > currentMessagesSize){
+          currentMessagesSize = response.data.length
     //     const sortedOldMessagesData = response.data.sort((a, b) => a.ID - b.ID)
-          setMessageText('');
+        
           setRenderedMessages(handleMessageView(response.data))
           
-         // chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+  
         }
     
 
@@ -154,21 +112,14 @@ function ChatBox(props) {
 
       
       //fetchUser();
-      fetchMessages();
+      
       setMessages([])
+      setMessageText('');
       setOldMessagesData([])
-     // chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+      fetchMessages();
   }, [receiverId]);
 
 
-
-  // handle events after data is fetched
-  // useEffect(() => {  
-  //   if(oldMessagesData.length > 1){
-  //     setPreviousSender(oldMessagesData[oldMessagesData.length-1].senderId)
-    
-  //   }
-  // }, [oldMessagesData]);
 
   // handles text bar size
   useEffect(() => {
@@ -187,17 +138,6 @@ function ChatBox(props) {
    
   
   }, [messageText])
-
-  // handle text bar value
-  // useEffect(() => {
-  //   // setMessageText('')
-  //   // setTextareaRows(2)
-
-  //   if(messages.length > 0){
-  //     setPreviousSender(messages[messages.length-1].senderId)
-  //   }
-
-  // }, [messages])
 
 
   // Scrolls to the bottom of the chat window
@@ -270,6 +210,7 @@ function ChatBox(props) {
       
       //setMessageText('');
       //setTextareaRows(2);
+      setMessageText('')
       handlePost(messageText)
       
 
@@ -341,8 +282,7 @@ function ChatBox(props) {
 
   const formatMessage = (message) => {
       const [letterWidth, letterHeight] = getTextWidth(['a'])
-      const lines = message.split("\n")
-
+      const lines = message.trim().split("\n")
 
       const formattedMessage = [];
       let maxCounter = 0;
@@ -370,7 +310,10 @@ function ChatBox(props) {
                   }
                   for(let part of splitParts){
                     maxCounter = Math.max(part.length, maxCounter)
-                    formattedMessage.push(part)
+                    if(part.length > 0){
+                      formattedMessage.push(part)
+                    }
+
                   }
 
                   continue
@@ -378,7 +321,9 @@ function ChatBox(props) {
               }
               
               if ((lineCounter + word.length) *letterWidth > maxWidth) {
-                  formattedMessage.push(currentLine);
+                  if(currentLine.length > 0){
+                      formattedMessage.push(currentLine);
+                  }
                   maxCounter = Math.max(lineCounter - word.length - 1, maxCounter);
                   currentLine = '';
                   lineCounter = 0;
@@ -392,10 +337,14 @@ function ChatBox(props) {
           }
 
           if (lineCounter !== 0) {
-              formattedMessage.push(currentLine);
+              if(currentLine.length > 0){
+                  formattedMessage.push(currentLine);
+              }
               maxCounter = Math.max(lineCounter, maxCounter);
           }
       })
+
+    //  console.log(formatMessage)
 
       return formattedMessage;
   };
@@ -411,6 +360,7 @@ function ChatBox(props) {
     const extraSpace = letterWidth*8
 
     const msg = {
+
         margin: `4px`,
         padding: `5px`,
         paddingLeft: '7px',
@@ -462,7 +412,7 @@ function ChatBox(props) {
         widthUnit = longestTextWidth + extraSpace
         if(msgTextArray.length > 1){
           widthUnit =  Math.max(extraSpace, longestTextWidth + letterWidth*2)
-          heightUnit += letterHeight + 25
+          heightUnit += letterHeight + 50
 
         }
         
@@ -511,7 +461,9 @@ function ChatBox(props) {
         htmlElements.push(
             <div key={index} style={{...combinedDic, position: 'relative', marginTop: `${topMargin}px`}}>
                 {/* <p>{msgText}</p> */}
-                <p style={{whiteSpace: 'pre-wrap'}}>{msgTextArray.map((line, index) => <span key={index}>{line}<br /></span>)}</p>
+                <p style={{whiteSpace: 'pre-wrap', top:'5px'}}
+                >{msgTextArray.map((line, index) => 
+                <span key={index}>{line}<br /></span>)}</p>
                 <p style={{ color: 'grey', fontSize: '12px', position: 'absolute', bottom: -10, right: 10 }}>{formattedTime}</p>
             </div>
         )
@@ -530,7 +482,6 @@ function ChatBox(props) {
 
     setShiftSender(shiftSender === senderId ? receiverId : senderId)
     setSenderId(shiftSender)
-    setCurrentSender(userData[shiftSender].username)
     console.log(window.innerWidth)
 
   };

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './ChatList.css';
 import ClipboardPaste from '../../clipboardCopyPaste/clipboardPaste'
 import axios from 'axios';
+import { apiBaseUrl } from './ApiConfig';
 
 function ChatList(props) {
 
@@ -25,7 +26,7 @@ function ChatList(props) {
         const fetchChats = async () => {
             try {
                 // Make a GET request to the backend API endpoint
-                const response = await axios.get(`http://localhost:5000/chatbox/chats/${senderId}`);
+                const response = await axios.get(`${apiBaseUrl}/chats/${senderId}`);
 
                 setChats(response.data)
         
@@ -37,7 +38,7 @@ function ChatList(props) {
         const fetechUserReceivers = async () => {
             try {
                 // Make a GET request to the backend API endpoint
-                const response = await axios.get(`http://localhost:5000/chatbox/users/${senderId}/receivers`);
+                const response = await axios.get(`${apiBaseUrl}/users/${senderId}/receivers`);
 
                 setReceivers(response.data)
         

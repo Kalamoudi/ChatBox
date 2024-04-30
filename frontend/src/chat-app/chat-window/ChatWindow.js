@@ -7,6 +7,7 @@ import ChatList from './ChatList';
 import ChatSignIn from './ChatSignIn';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
+import { apiBaseUrl } from './ApiConfig';
 
 function ChatWindow() {
 
@@ -19,16 +20,7 @@ function ChatWindow() {
 
     const navigate = useNavigate();
 
-    // useEffect(() => {
-    //     if (senderId <= 0) {
-    //       window.location.href = '/chatapp/login';
-    //     }
-    //   }, [senderId]);
-
-
-    // Create a userpage that is called if user never logged in
-    // User can either sign in or create an account
-
+    
 
     useEffect(() => {
         const checkCookie = () => {
@@ -43,6 +35,7 @@ function ChatWindow() {
         checkCookie()
 
     },[senderId])
+
 
     const handleView = () => {
 
