@@ -113,9 +113,7 @@ function ChatBox(props) {
       
       //fetchUser();
       
-      setMessages([])
       setMessageText('');
-      setOldMessagesData([])
       fetchMessages();
   }, [receiverId]);
 
@@ -486,67 +484,46 @@ function ChatBox(props) {
 
   };
 
-  const chatBox = {
-   // position: `absolute`,
-    marginLeft: `${chatListWidth}px`,
-    width: `${windowWidth-chatListWidth}px`,
-    // boxShadow: `1px 1px 5px rgba(0, 0, 0, 0.1)`,
-    // overflow: `hidden`,
-}
-
-// const chatBoxWindow = {
-//     //height: `${window.innerHeight-typeBarHeight}px`,
-//     height: `82.5vh`,
-//     padding: `10px`,
-//     display: `flex`,
-//     overflowY: 'scroll',
-//     flexDirection: `column`,
-//     backgroundColor: `rgb(136, 182, 199)`,
-//     scrollbarWidth: 'none', 
-//     scrollBehavior: 'smooth',
-// }
-
-
-const scrollDown = () => {
-  chatBoxRef.current.scrollTo({
-    top: chatBoxRef.current.scrollHeight+999999,
-    behavior: 'instant'
-  });
-}
-
-
-const handleMessageBar = () => {
+  
+const handleMessageTextBox = () => {
 
   const htmlElements = []
 
   htmlElements.push(
-    <div style={{display: 'flex', alignItems: 'flex-end'}}>
+    <div className="type-bar">
           <textarea      
           //   onKeyDown={handleMessageInput}
-              rows={textareaRows} // Set rows to 1 to make it look like an input field
-              style={{ 
+              className='type-bar-input' // Set rows to 1 to make it look like an input field
+              style={{
                 width: `${windowWidth*(1-0.2)-chatListWidth}px`,
-                resize: 'none',
-                position: 'absolute',
-                bottom: '0',
-                marginBottom: '10px'
               }}
+
+              rows={textareaRows}
               placeholder="Type your message..."
               onChange={handleMessageInput}
               value={messageText}
               onKeyDown={handleMessageKeyDown}
           />
           <button style={{
-              position: 'absolute',
               left: `${windowWidth*(1-0.2)-chatListWidth}px`,
-              bottom: '10px',
-              height: '36px',
               }} onClick={handleSendMessage}>Send</button>
           </div>
       )
 
       return htmlElements
 }
+
+
+  const chatBox = {
+   // position: `absolute`,
+    marginLeft: `${chatListWidth}px`,
+    width: `${windowWidth-chatListWidth}px`,
+    height: `${windowHeight}px`
+    // boxShadow: `1px 1px 5px rgba(0, 0, 0, 0.1)`,
+    // overflow: `hidden`,
+}
+
+
 
 
 
@@ -562,13 +539,11 @@ const handleMessageBar = () => {
         {/* {handleMessageView(messages)}  */}
         {/* {handleMessageView(newMessage)} */}
       </div>
-      <div className="type-bar">
-        {handleMessageBar()}
-
+      <div className='type-bar-container'>
+        {handleMessageTextBox()}
       </div>
-         
 
- 
+
     </div>
   );
 }

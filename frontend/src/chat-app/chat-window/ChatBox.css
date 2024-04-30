@@ -1,54 +1,55 @@
-.chat-box {
-    position: absolute;
-    margin-left: 300px;
-    width: 800px;
-    /* border: 1px solid #ccc; */
-    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
-    /* border-radius: 5px; */
-    overflow: hidden;
-    
-  }
-  
-  .chat-window {
-    height: 600px;
+  .chatbox-window {
+    height: 90%;
     padding: 10px;
-    overflow-y: scroll;
     display: flex;
+    overflow-y: scroll;
+    overflow-x: hidden;
     flex-direction: column;
-    /* overflow: hidden; */
     background-color: rgb(136, 182, 199);
+    scrollbar-width: none;
+    scroll-behavior: smooth;
+  }
+
+  .chatbox {
+    position: absolute;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+
   }
   
-  .type-bar {
-    padding-bottom: 120px;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-end;
+  .type-bar-container {
     position: relative;
-    /* padding: 10px; */
-    /* border-top: 1px solid #ccc; */
-    /* background-color: rgb(111, 155, 171); */
+    top: 0%;
+    height: 100%;
     background-color: rgb(119, 166, 183);
   }
-  
-  .test {
-    align-items: top;
+
+
+  .type-bar {
+    position: absolute;
+    top: 1.5%;
   }
-  .type-bar input {
-    flex: 1;
-    padding: 5px;
+  .type-bar-input {
+    position: absolute;
     border: 1px solid #ccc;
-    border-radius: 5px;
+    border-radius: 1px;
+    top: 20%;
   }
   
   .type-bar button {
+    position: absolute;
+    right: 100%;
+    top: 20%;
+    width: 60px;
     margin-left: 10px;
     padding: 5px 10px;
     background-color: #007bff;
     color: #fff;
     border: none;
-    border-radius: 5px;
+    /* border-radius: 5px; */
     cursor: pointer;
+    /* bottom: 10px; */
+    height: 36px;
   }
 
   .date-block {
@@ -74,20 +75,4 @@
     font-size: 11px;
   }
 
-  .chatbox-window {
-    height: 82.5vh;
-    padding: 10px;
-    display: flex;
-    overflow-y: scroll;
-    flex-direction: column;
-    background-color: rgb(136, 182, 199);
-    scrollbar-width: none;
-    scroll-behavior: smooth;
-  }
-
-  .chatbox {
-    position: absolute;
-    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-  }
 

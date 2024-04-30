@@ -97,14 +97,13 @@ function ChatList(props) {
 
     const handleChatsListView = () => {
 
+ 
         let topMargin = 1
-        const itemHeight = 50
+    //    const itemHeight = 50
 
         const chatListItem = {
-            height: `${itemHeight}px`,
             padding: `10px`,
-            display: 'flex',
-            flexDirection: 'row',
+            marginBottom: `5px`,
             borderRadius: `5px`, // border-radius changed to borderRadius
             backgroundColor: `rgb(110, 145, 159)`
         }
@@ -115,16 +114,17 @@ function ChatList(props) {
         receivers.forEach((receiver, index) => {
             htmlElements.push(
                 <div key={index} 
-                    style={{...chatListItem, 
-                        position: 'relative', 
-                        marginTop: `${topMargin}px`}}
+                    style= {chatListItem}
+                    // style={{...chatListItem, 
+                    //     position: 'relative', 
+                    //     marginTop: `${topMargin}px`}}
                     onClick={() => handleListItemClick(receiver)}>
 
                     {/* <p>{msgText}</p> */}
                     <p> {receiver.username} </p>
                 </div>
             )
-            topMargin += 3
+            topMargin = 5
 
 
         })
@@ -136,32 +136,21 @@ function ChatList(props) {
     }
 
     const chatList = {
-        boxSizing: `border-box`,
-        float: `left`,
+        // boxSizing: `border-box`,
         width: `${chatListWidth}px`,
+        height: `${windowHeight}px`,
+        float: `left`,
         boxShadow: `1px 1px 5px rgba(0, 0, 0, 0.1)`,
-        overflow: `hidden`
+        overflow: `hidden`,
+        backgroundColor: `rgb(119, 166, 183)`,
     }
 
     const chatListWindow = {
-        //height: `${windowHeight}px`,
-        height: `97.5vh`,
         padding: `10px`,
-        display: `flex`,
-        flexDirection: `column`,
-        backgroundColor: `rgb(119, 166, 183)`,
         overflowY: 'scroll',
         scrollbarWidth: 'none'
     }
 
-    const chatListItem = {
-        height: `${itemHeight}px`,
-        padding: `10px`,
-        display: 'flex',
-        flexDirection: 'row',
-        borderRadius: `5px`, // border-radius changed to borderRadius
-        backgroundColor: `rgb(110, 145, 159)`
-    }
 
   return (
     <div>
