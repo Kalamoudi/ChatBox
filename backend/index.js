@@ -14,6 +14,7 @@ const bodyParser = require('body-parser');
 const userQuery = require('./queries/users')
 const loginQuery = require('./queries/login')
 const registerQuery = require ('./queries/register')
+const imageQuery = require("./queries/images")
 
 
 
@@ -60,6 +61,9 @@ userQuery.getReceiverUsersBySenderId(app, connection)
 loginQuery.findUserInDb(app, connection)
 registerQuery.findAccount(app, connection)
 registerQuery.createAccount(app, connection)
+imageQuery.getNextImageListId(app, connection)
+imageQuery.postImage(app, connection)
+imageQuery.postImageListEntries(app, connection)
 
 
 // Start the Express server

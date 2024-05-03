@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './ChatBox.css';
 import axios from 'axios';
 import { apiBaseUrl } from './ApiConfig';
+import attachmentImage from '../../assets/icons/chatapp/attachment-icon.png'
 
 function ChatBox(props) {
 
@@ -11,14 +12,24 @@ function ChatBox(props) {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth)
   const [windowHeight, setWindowHeight] = useState(window.innerHeight)
   const [chatListWidth, setChatListWidth] = useState(window.innerWidth*chatListWidthFraction)
+  const [chatBoxWidth, setChatBoxWidth] = useState(window.innerWidth*(1-chatListWidthFraction))
+  const [imgList, setImgList] = useState([])
+  const [imgObjectList, setImgObjectList] = useState([])
+  const [imgData, setImgData] = useState('')
+  const [attachImage, setAttachImage] = useState(null)
 
   const maxWidthPercentage = 0.7
   const typeBarHeight = 100
+  const attachmentIcon = "..\..\assets\icons\chatapp\attachment-icon.png"
 
 
   const [messageText, setMessageText] = useState('');
   const [textareaRows, setTextareaRows] = useState(2);
+  const [captionRows, setCaptionRows] = useState(2);
   const [maxWidth, setMaxWidth] = useState((window.innerWidth-chatListWidth)*maxWidthPercentage)
+  const [attachmentWhiteBoxMul, setAttachmentWhiteBoxMul] = useState(0)
+  const [charWidth, setCharWidth] = useState(0)
+  const [charHeight, setCharHeight] = useState(0)
 
   let previousDate = ""
   let currentMessagesSize = 0
@@ -26,12 +37,15 @@ function ChatBox(props) {
 
 
   const [renderedMessages, setRenderedMessages] = useState(null)
+  const [renderMessageBox, setRenderMessageBox] = useState(null)
 
   const chatBoxRef = useRef(null)
   
 
   // Testing purposes
   const [shiftSender, setShiftSender] = useState(senderId)
+
+
 
 
 
@@ -62,12 +76,63 @@ function ChatBox(props) {
 
     const sender = senderId
     const receiver = receiverId
-    
+
+
+    let imageListId = 0
+
+
+    if(imgObjectList.length > 0){
+        const endpoint = `${apiBaseUrl}/imageList`
+        const response = await axios.get(endpoint)
+        console.log(response.status)
+        if(response.status===200){
+            console.log("REACHED HERE")
+            imageListId = response.data[0]["Ids"] + 1
+            const messageId = response.data[1]["Ids"] + 1
+
+            console.log(response.data)
+            for(let imgObject of imgObjectList) {
+
+              const imgJSON = {
+                ImageData: imgObject,
+                ImageListId: imageListId,
+              }
+              await fetch(`${apiBaseUrl}/images`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(imgJSON),
+              });
+            }
+            const imgListsJSON = {
+              ImageListId: imageListId,
+              MessageId: messageId,
+              
+            }
+
+            await fetch(`${apiBaseUrl}/imageList`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(imgListsJSON)
+            })
+
+        }
+
+        setImgList([])
+        setImgObjectList([])
+
+    }
+
+  
     const messageJSON = {
       senderId: sender,
       receiverId: receiver,
       content: message,
       date: mySqlDate,
+      ImageListId: imageListId,
     };
 
     await fetch(`${apiBaseUrl}/messages`, {
@@ -79,30 +144,25 @@ function ChatBox(props) {
     });
   }
 
+
+
+  useEffect(() => {
+    const [cWidth, cHeight] = getTextWidth(['A'])
+    setCharWidth(cWidth)
+    setCharHeight(cHeight)
+  }, [])
+
  // Fetch data
   useEffect(() => {
     const fetchMessages = async () => {
       try{
-       // const endpoint = `http://localhost:5000/chatbox/messages/${senderId}/${receiverId}`
-       const endpoint = `${apiBaseUrl}/messages/${senderId}/${receiverId}`
+        const endpoint = `${apiBaseUrl}/messages/${senderId}/${receiverId}`
         const response = await axios.get(endpoint)
 
-
-        
-        // console.log("length in fetch: " + sortedOldMessagesData.length)
-        // console.log("pewpew: " + pewpew)
-        
         if(response.data && response.data.length > currentMessagesSize){
-          currentMessagesSize = response.data.length
-    //     const sortedOldMessagesData = response.data.sort((a, b) => a.ID - b.ID)
-        
+          currentMessagesSize = response.data.length  
           setRenderedMessages(handleMessageView(response.data))
-          
-  
         }
-    
-
-
       } catch(error){
         console.error('Error fetching chat information', error)
       } finally {
@@ -110,9 +170,6 @@ function ChatBox(props) {
       }
     };
 
-      
-      //fetchUser();
-      
       setMessageText('');
       fetchMessages();
   }, [receiverId]);
@@ -132,10 +189,15 @@ function ChatBox(props) {
         return count
     }
 
-    setTextareaRows(Math.max(2, Math.min(6, 1+findNumberOfNewLine(messageText))));
-   
+    let initial = 1
+    if(imgList.length === 0){
+        setTextareaRows(Math.max(2, Math.min(6, initial+findNumberOfNewLine(messageText))));
+    }else{
+        setCaptionRows(Math.max(2, Math.min(6, initial+findNumberOfNewLine(messageText))));
+    }
+    setRenderMessageBox(handleMessageTextBox())
   
-  }, [messageText])
+  }, [messageText, imgObjectList])
 
 
   // Scrolls to the bottom of the chat window
@@ -156,6 +218,7 @@ function ChatBox(props) {
         setWindowWidth(window.innerWidth);
         const chatLW = window.innerWidth * chatListWidthFraction;
         setChatListWidth(chatLW);
+        setChatBoxWidth(window.innerWidth*(1-chatListWidthFraction))
         setMaxWidth((window.innerWidth - chatLW) * maxWidthPercentage);
     };
 
@@ -170,6 +233,31 @@ function ChatBox(props) {
     };
 }, []);
 
+
+
+// Handling if img exists in imgList
+
+  useEffect(() => {
+
+    if(imgObjectList.length > 0){
+     // console.log(imgList)
+      console.log(imgObjectList)
+      setAttachmentWhiteBoxMul(0.4)
+    }
+    else{
+      setAttachmentWhiteBoxMul(0)
+    }
+
+
+  }, [imgObjectList])
+
+  useEffect(() => {
+
+    if(imgList.length > 0){
+       console.log(imgList)
+       setAttachImage(imgList[imgList.length-1])
+    }
+  }, [imgList])
 
 
 
@@ -188,31 +276,15 @@ function ChatBox(props) {
       }
 
       if(countSpaces === messageText.length){
+
         return
       }
 
-
-      const sender = senderId
-      const receiver = receiverId
-
-      const newMessageEntry = {
-        senderId: sender,
-        receiverId: receiver,
-        content: messageText,
-        date: new Date().toISOString()
-      }
-
-      //setMessages([...messages, { text: messageText, sender: senderId }]);
-    //  setMessages(prev => [...prev, newMessageEntry])
-
-      
-      //setMessageText('');
-      //setTextareaRows(2);
       setMessageText('')
       handlePost(messageText)
       
-
     }
+
     
   };
 
@@ -399,7 +471,7 @@ function ChatBox(props) {
 
     const initialHeightUnit = letterHeight
     heightUnit = 0
-    messages.forEach((message, index) => {
+    messages.map((message, index) => {
         
         const msgTextArray = formatMessage(message.content)
 
@@ -459,9 +531,12 @@ function ChatBox(props) {
         htmlElements.push(
             <div key={index} style={{...combinedDic, position: 'relative', marginTop: `${topMargin}px`}}>
                 {/* <p>{msgText}</p> */}
-                <p style={{whiteSpace: 'pre-wrap', top:'5px'}}
-                >{msgTextArray.map((line, index) => 
-                <span key={index}>{line}<br /></span>)}</p>
+                <p style={{whiteSpace: 'pre-wrap', top:'5px'}}>
+                  {
+                    msgTextArray.map((line, index) => 
+                    <span key={index}>{line}<br /></span>)
+                  }
+                </p>
                 <p style={{ color: 'grey', fontSize: '12px', position: 'absolute', bottom: -10, right: 10 }}>{formattedTime}</p>
             </div>
         )
@@ -484,19 +559,58 @@ function ChatBox(props) {
 
   };
 
+
+  const handleAttachmentButton = () => {
+
+    console.log("Attachment Button Pressed")
+    handleImageUpload()
+
+  }
+
+  const handleImageUpload = () => {
+    // Programmatically click on the file input element
+    document.getElementById('fileInput').click();
+  };
+
+  const handleFileSelect = (event) => {
+    
+    const file = event.target.files[0];
+    console.log(event.target.files)
+
+    const img = new Image();
+    const imgUrl = URL.createObjectURL(file)
+    img.src = imgUrl
+    img.onload = () => {
+      console.log("Height: " + img.height)
+      const imgData = {
+        data: file,
+        width: img.width,
+        height: img.height,
+        url: imgUrl
+      }
+      console.log()
+      if(!imgList.some(item => item.data.name === imgData.data.name)){
+          setImgList([...imgList, imgData])
+          setAttachImage(imgData)
+      }
+    }
   
+
+    
+    //setImgList([...imgList, {image: file, width: iWidth, height: iHeight}]);
+    
+    setImgObjectList([...imgObjectList, URL.createObjectURL(file)])
+
+  };
+
 const handleMessageTextBox = () => {
 
-  const htmlElements = []
-
-  htmlElements.push(
+    return (
     <div className="type-bar">
           <textarea      
           //   onKeyDown={handleMessageInput}
               className='type-bar-input' // Set rows to 1 to make it look like an input field
-              style={{
-                width: `${windowWidth*(1-0.2)-chatListWidth}px`,
-              }}
+              style={textAreaStyle}
 
               rows={textareaRows}
               placeholder="Type your message..."
@@ -504,35 +618,233 @@ const handleMessageTextBox = () => {
               value={messageText}
               onKeyDown={handleMessageKeyDown}
           />
-          <button style={{
-              left: `${windowWidth*(1-0.2)-chatListWidth}px`,
-              }} onClick={handleSendMessage}>Send</button>
+           
+     
+          {/* <button style={attachmentButton}></button> */}
+
+          <input id="fileInput" type="file" style={{display: `none`}} onChange={handleFileSelect} />
+          {/* <div>
+            {imgObjectList.map((image, index) => (
+              <img key={index} src={image} alt={`Image ${index}`} style={imgAttachment} />
+            ))}
+          </div> */}
+
+          <img src={attachmentImage} 
+               style={attachmentButton}
+               onClick={handleAttachmentButton}
+               />
+
+
+          <button className='type-bar-button' style={typeBarButton} onClick={handleSendMessage}>Send</button>
           </div>
       )
 
-      return htmlElements
+
+}
+
+
+
+
+const handleAttachmentView = () => {
+
+
+  if(imgList.length === 0){
+    return
+  }
+
+  const imgHeight = Math.min((attachImage.height*windowHeight*0.4/attachImage.width), windowHeight*0.7)
+
+  const containerWidth = windowWidth*(1-0.2)-chatListWidth
+  const containerHeight = imgHeight + 50
+
+  const imgWidth = (attachImage.width*containerWidth/attachImage.height)
+
+  const fullContainerWidth = containerWidth+60
+
+  const attachmentContainer = {
+    position: `relative`,
+    width: `${containerWidth+90}px`,
+    backgroundColor: `#6d93a3`,
+    left: `2%`,
+
+  }
+
+  let upper = 0.715*charHeight*(captionRows-2)
+  const upperContainer = {
+    height: `${containerHeight}px`,
+    bottom: `${containerHeight+101+upper}px`,  // 315
+  }
+
+  let lowerContainerHeight = 150+upper
+  const lowerContainer = {
+    height: `${lowerContainerHeight}px`,
+    bottom: `${containerHeight+100+upper}px`,
+  }
+
+  const captionTextBox = {
+    // position: `relative`,
+    left: `4%`, 
+    // bottom: `${lowerContainerHeight+700}px`,
+    bottom: `${windowHeight+lowerContainerHeight-95}px`,
+    width: `${containerWidth}px`,
+    
+  }
+
+
+  const imgStyle = {
+    display: 'inline',
+    position: `relative`,
+    width: `auto`,
+    height: `auto`,
+    maxWidth: `${imgWidth}px`,
+    maxHeight: `${imgHeight}px`,
+    transform: `translate(-50%, 0%)`,
+    left: `${fullContainerWidth/2}px`,
+    top: `${containerHeight/2}px`,
+    transform: `translate(-50%, -50%)`,
+    cursor: `pointer`,
+  }
+  const imgElements = []
+
+  const smallImgStyle = {
+    display: 'inline',
+    position: `relative`,
+    width: `50px`,
+    height: `50px`,
+    transform: `translate(-50%, 0%)`,
+    bottom: `${containerHeight+180+upper}px`,
+    cursor: `pointer`,
+  }
+
+  imgList.map((imgData, index) => {
+    imgElements.push(
+      <img key={index} src={imgData.url} alt={`Image ${index}`}
+           style={{...smallImgStyle, left: `${fullContainerWidth/2 - 25*imgList.length + index*15}px`}}
+           onClick={() => setAttachImage(imgData)}
+      />
+    )
+  })
+
+
+  return (
+      <div>
+        <div style={{...attachmentContainer, ...upperContainer}}>
+
+
+          <img src={attachImage.url} 
+               style={imgStyle}
+          
+          
+          />
+          
+        </div>
+        <div style={{...attachmentContainer, ...lowerContainer}}>
+
+        </div>
+        <textarea      
+        //   onKeyDown={handleMessageInput}
+            className='type-bar-input' // Set rows to 1 to make it look like an input field
+            style={{...textAreaStyle,...captionTextBox  }}
+            rows={captionRows}
+            placeholder="Caption"
+            onChange={handleMessageInput}
+            value={messageText}
+            onKeyDown={handleMessageKeyDown}
+        />
+
+        <img src={attachmentImage} 
+              style={{...attachmentButton, left:`5%`}}
+              onClick={handleAttachmentButton}
+        />
+
+        {imgElements}
+
+        <button className='type-bar-button' 
+                style={{...typeBarButton, left:`75%`}} 
+                onClick={handleSendMessage}>
+                Send
+        </button>
+      </div>
+
+
+  )
+
+}
+
+
+
+const textAreaStyle = {
+
+ // width: `${windowWidth*(1-0.2)-chatListWidth}px`,
+  width: `${(windowWidth*(1-0.2)-chatListWidth)}px`,
+  resize: 'none',
+  maxWidth: `100%`
+}
+
+const attachmentWhiteBox = {
+  // top: `${(textareaRows-2)*1 - 4}px`,
+  top: `1.5%`,
+  left: `${(windowWidth*(1-0.2)-chatListWidth)*(1-attachmentWhiteBoxMul)+5}px`,
+  width: `${(windowWidth*(1-0.2)-chatListWidth)*attachmentWhiteBoxMul}px`,
+//  height: `auto`,
+  resize: `none`,
+
+}
+
+
+const imgAttachment = {
+
+  display:`flex`,
+  position: `absolute`,
+  right: `100%`,
+  top: `${(textareaRows-2)*15.25 -45}px`,
+  left: `${windowWidth*(1-0.2)-chatListWidth - 148}px`,
+  maxWidth: `100px`,
+  maxHeight: `60px`,
+  width: `auto`,
+  height: `auto`,
+  alignItems: `center`,
+  cursor: `pointer`,
+  backgroundImage: `url(${attachmentIcon})`,
 }
 
 
   const chatBox = {
-   // position: `absolute`,
     marginLeft: `${chatListWidth}px`,
     width: `${windowWidth-chatListWidth}px`,
     height: `${windowHeight}px`
-    // boxShadow: `1px 1px 5px rgba(0, 0, 0, 0.1)`,
-    // overflow: `hidden`,
 }
 
+const chatBoxWindow = {
+  height: `${windowHeight*0.9 - (textareaRows-2)*15.25}px`,
 
+}
 
+const typeBarButton = {
+  top: `${(textareaRows-2)*15.25}px`,
+  left: `${windowWidth*(1-0.2)-chatListWidth}px`,
 
+  //left: `100%`
 
+}
 
+const attachmentButton = {
+    display:`flex`,
+    position: `absolute`,
+    right: `100%`,
+    top: `${(textareaRows-2)*15.25 + 8}px`,
+    left: `${windowWidth*(1-0.2)-chatListWidth - 25}px`,
+    width: `20px`,
+    height: `auto`,
+    alignItems: `center`,
+    cursor: `pointer`,
+    // backgroundImage: `url(${attachmentIcon})`,
+}
 
 
   return (
     <div className='chatbox' style={chatBox}>
-      <div className='chatbox-window' ref={chatBoxRef}>
+      <div className='chatbox-window' style ={chatBoxWindow} ref={chatBoxRef}>
         {/* {handleMessageView(oldMessagesData)} */}
         {renderedMessages}
         {/* {newMessage} */}
@@ -541,6 +853,7 @@ const handleMessageTextBox = () => {
       </div>
       <div className='type-bar-container'>
         {handleMessageTextBox()}
+        {handleAttachmentView()}
       </div>
 
 

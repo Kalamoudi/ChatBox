@@ -49,14 +49,14 @@ const postMessagesBySenderIdAndReceiverId = (app, connection) => {
     app.post('/chatbox/messages', async (req, res) => {
         try {
             //const { senderId, receiverId, content, date } = req.body;
-            const {senderId, receiverId, content, date} = req.body
+            const {senderId, receiverId, content, date, ImageListId} = req.body
 
             const queryString = `
-                INSERT INTO messages (senderId, receiverId, content, date)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO messages (senderId, receiverId, content, date, ImageListId)
+                VALUES (?, ?, ?, ?, ?)
             `;
 
-            const values = [senderId, receiverId, content, date]
+            const values = [senderId, receiverId, content, date, ImageListId]
 
             connection.query(queryString, values, (err, result) => {
                 if (err) {
