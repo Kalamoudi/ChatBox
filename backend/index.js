@@ -15,6 +15,7 @@ const userQuery = require('./queries/users')
 const loginQuery = require('./queries/login')
 const registerQuery = require ('./queries/register')
 const imageQuery = require("./queries/images")
+const profilePictureQuery = require("./queries/profile_picture")
 
 
 
@@ -27,6 +28,7 @@ app.use(cors({
     credentials: true
 }));
 
+app.use('/AllProfilePictures', express.static('C:\\Users\\Khalid\\Documents\\Workspaces-VSC\\SelfProjects\\images_for_simple-react-app'));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
@@ -64,6 +66,12 @@ registerQuery.createAccount(app, connection)
 imageQuery.getNextImageListId(app, connection)
 imageQuery.postImage(app, connection)
 imageQuery.postImageListEntries(app, connection)
+profilePictureQuery.getNextProfilePictureId(app, connection)
+profilePictureQuery.addProfilePicture(app, connection)
+profilePictureQuery.deleteProfilePicture(app, connection)
+profilePictureQuery.updateUserProfilePicture(app, connection)
+profilePictureQuery.getProfilePictureById(app, connection)
+profilePictureQuery.getRecevierPicsByIds(app, connection)
 
 
 // Start the Express server
