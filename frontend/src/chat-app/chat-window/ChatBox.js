@@ -3,8 +3,9 @@ import './ChatBox.css';
 import axios from 'axios';
 import { apiBaseUrl } from './ApiConfig';
 import attachmentImage from '../../assets/icons/chatapp/attachment-icon.png'
+import closeIcon from '../../assets/icons/chatapp/close-icon.png'
 
-function ChatBox(props) {
+function ChatBox(props, {onClick}) {
 
   const {senderId, setSenderId, receiverId, serReceiverId} = props
 
@@ -14,9 +15,9 @@ function ChatBox(props) {
   const [chatListWidth, setChatListWidth] = useState(window.innerWidth*chatListWidthFraction)
   const [chatBoxWidth, setChatBoxWidth] = useState(window.innerWidth*(1-chatListWidthFraction))
   const [imgList, setImgList] = useState([])
-  const [imgObjectList, setImgObjectList] = useState([])
   const [imgData, setImgData] = useState('')
   const [attachImage, setAttachImage] = useState(null)
+  const attachContrainerRef = useRef(null)
 
   const maxWidthPercentage = 0.7
   const typeBarHeight = 100
@@ -30,6 +31,7 @@ function ChatBox(props) {
   const [attachmentWhiteBoxMul, setAttachmentWhiteBoxMul] = useState(0)
   const [charWidth, setCharWidth] = useState(0)
   const [charHeight, setCharHeight] = useState(0)
+  const [filesLength, setFilesLength] = useState(0)
 
   let previousDate = ""
   let currentMessagesSize = 0
@@ -81,20 +83,20 @@ function ChatBox(props) {
     let imageListId = 0
 
 
-    if(imgObjectList.length > 0){
+    if(imgList.length > 0){
         const endpoint = `${apiBaseUrl}/imageList`
         const response = await axios.get(endpoint)
-        console.log(response.status)
+      //  console.log(response.status)
         if(response.status===200){
-            console.log("REACHED HERE")
+        //    console.log("REACHED HERE")
             imageListId = response.data[0]["Ids"] + 1
             const messageId = response.data[1]["Ids"] + 1
 
-            console.log(response.data)
-            for(let imgObject of imgObjectList) {
+       //     console.log(response.data)
+            for(let imgData of imgList) {
 
               const imgJSON = {
-                ImageData: imgObject,
+                ImageData: imgData.url,
                 ImageListId: imageListId,
               }
               await fetch(`${apiBaseUrl}/images`, {
@@ -122,7 +124,6 @@ function ChatBox(props) {
         }
 
         setImgList([])
-        setImgObjectList([])
 
     }
 
@@ -158,8 +159,29 @@ function ChatBox(props) {
       try{
         const endpoint = `${apiBaseUrl}/messages/${senderId}/${receiverId}`
         const response = await axios.get(endpoint)
+        if(response.data){
+         // console.log(response.data)
+          currentMessagesSize = response.data.length  
+          setRenderedMessages(handleMessageView(response.data))
+        }
+      } catch(error){
+        console.error('Error fetching chat information', error)
+      }
+    };
 
+      setMessageText('');
+      fetchMessages();
+  }, [receiverId]);
+
+
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try{
+        const endpoint = `${apiBaseUrl}/messages/${senderId}/${receiverId}`
+        const response = await axios.get(endpoint)
         if(response.data && response.data.length > currentMessagesSize){
+       //   console.log(response.data)
           currentMessagesSize = response.data.length  
           setRenderedMessages(handleMessageView(response.data))
         }
@@ -197,7 +219,7 @@ function ChatBox(props) {
     }
     setRenderMessageBox(handleMessageTextBox())
   
-  }, [messageText, imgObjectList])
+  }, [messageText])
 
 
   // Scrolls to the bottom of the chat window
@@ -239,28 +261,11 @@ function ChatBox(props) {
 
   useEffect(() => {
 
-    if(imgObjectList.length > 0){
-     // console.log(imgList)
-      console.log(imgObjectList)
-      setAttachmentWhiteBoxMul(0.4)
-    }
-    else{
-      setAttachmentWhiteBoxMul(0)
-    }
-
-
-  }, [imgObjectList])
-
-  useEffect(() => {
-
     if(imgList.length > 0){
-       console.log(imgList)
+    //   console.log(imgList)
        setAttachImage(imgList[imgList.length-1])
     }
   }, [imgList])
-
-
-
 
 
 
@@ -468,8 +473,6 @@ function ChatBox(props) {
 
     const htmlElements = []
     
-
-    const initialHeightUnit = letterHeight
     heightUnit = 0
     messages.map((message, index) => {
         
@@ -543,7 +546,7 @@ function ChatBox(props) {
 
         });
 
-
+  
       return htmlElements
 
   }
@@ -555,14 +558,14 @@ function ChatBox(props) {
 
     setShiftSender(shiftSender === senderId ? receiverId : senderId)
     setSenderId(shiftSender)
-    console.log(window.innerWidth)
+   // console.log(window.innerWidth)
 
   };
 
 
   const handleAttachmentButton = () => {
 
-    console.log("Attachment Button Pressed")
+    //console.log("Attachment Button Pressed")
     handleImageUpload()
 
   }
@@ -574,21 +577,26 @@ function ChatBox(props) {
 
   const handleFileSelect = (event) => {
     
+    if(event.target.files.length === 0){
+      return
+    }
+
     const file = event.target.files[0];
-    console.log(event.target.files)
+    
+   // console.log(event.target.files)
 
     const img = new Image();
     const imgUrl = URL.createObjectURL(file)
     img.src = imgUrl
     img.onload = () => {
-      console.log("Height: " + img.height)
+    //  console.log("Height: " + img.height)
       const imgData = {
         data: file,
         width: img.width,
         height: img.height,
         url: imgUrl
       }
-      console.log()
+  
       if(!imgList.some(item => item.data.name === imgData.data.name)){
           setImgList([...imgList, imgData])
           setAttachImage(imgData)
@@ -599,7 +607,6 @@ function ChatBox(props) {
     
     //setImgList([...imgList, {image: file, width: iWidth, height: iHeight}]);
     
-    setImgObjectList([...imgObjectList, URL.createObjectURL(file)])
 
   };
 
@@ -644,6 +651,13 @@ const handleMessageTextBox = () => {
 
 
 
+const handleAttachmentClose = () => {
+
+    setImgList([])
+    setAttachImage(null)
+}
+
+
 
 const handleAttachmentView = () => {
 
@@ -661,32 +675,54 @@ const handleAttachmentView = () => {
 
   const fullContainerWidth = containerWidth+60
 
+  const lowerContainerBottom = 10
+  const textBoxHeight = 36
+
   const attachmentContainer = {
     position: `relative`,
     width: `${containerWidth+90}px`,
     backgroundColor: `#6d93a3`,
     left: `2%`,
+    borderRadius: `5px`,
+    
 
   }
 
   let upper = 0.715*charHeight*(captionRows-2)
+  let lowerContainerHeight = windowHeight*0.2
+
   const upperContainer = {
+    position: `fixed`,
     height: `${containerHeight}px`,
-    bottom: `${containerHeight+101+upper}px`,  // 315
+    // bottom: `${containerHeight+101+upper}px`,  // 315
+    bottom: `${lowerContainerBottom + lowerContainerHeight }px`,
+    left: `${chatListWidth+18}px`,
+    borderRadius: `2px`,
+    border: `2px solid rgb(83, 109, 119)`
+    
   }
 
-  let lowerContainerHeight = 150+upper
   const lowerContainer = {
+    position: `fixed`,
     height: `${lowerContainerHeight}px`,
-    bottom: `${containerHeight+100+upper}px`,
+   // bottom: `${lowerContainerHeight - 2 + upper}px`, // 2 is seperator between top and bottm
+    bottom: `${lowerContainerBottom}px`,
+    left: `${chatListWidth + 18}px`,
+    borderTop: `1px solid rgb(83, 109, 119)`,
+    borderRadius: `0px`,
+    border: `2px solid rgb(83, 109, 119)`
+    //top: `-13.5%`
   }
 
   const captionTextBox = {
-    // position: `relative`,
+    position: `relative`,
     left: `4%`, 
-    // bottom: `${lowerContainerHeight+700}px`,
-    bottom: `${windowHeight+lowerContainerHeight-95}px`,
     width: `${containerWidth}px`,
+    // bottom: `${lowerContainerHeight+700}px`,
+    // bottom: `${lowerContainerBottom + lowerContainerHeight - textBoxHeight - 8}px`,
+    // left: `${chatListWidth + 18 + 10}px`,
+    top: `5%`,
+
     
   }
 
@@ -712,7 +748,8 @@ const handleAttachmentView = () => {
     width: `50px`,
     height: `50px`,
     transform: `translate(-50%, 0%)`,
-    bottom: `${containerHeight+180+upper}px`,
+    // bottom: `${containerHeight+180+upper}px`,
+    top: `10%`,
     cursor: `pointer`,
   }
 
@@ -726,9 +763,22 @@ const handleAttachmentView = () => {
   })
 
 
+  const closeAttachment = {
+    display:`flex`,
+    position: `relative`,
+    width: `15px`,
+    height: `auto`,
+    alignItems: `center`,
+    cursor: `pointer`,
+}
+
+
   return (
-      <div>
-        <div style={{...attachmentContainer, ...upperContainer}}>
+      <div style={{boxShadow: `0 4px 8px rgba(0, 0, 0, 0.2)`, transform: `0.1 ease`, }}
+           id="attachContainer"
+      
+      >
+        <div style={{...attachmentContainer, ...upperContainer, }}>
 
 
           <img src={attachImage.url} 
@@ -736,34 +786,52 @@ const handleAttachmentView = () => {
           
           
           />
+
+          <img 
+            src={closeIcon}
+            style ={{...closeAttachment, left:`94%`, top:`-87%`}}
+            onClick={handleAttachmentClose}
+        
+         />
           
         </div>
         <div style={{...attachmentContainer, ...lowerContainer}}>
 
+            <textarea      
+            //   onKeyDown={handleMessageInput}
+                className='type-bar-input' // Set rows to 1 to make it look like an input field
+                style={{...textAreaStyle,...captionTextBox  }}
+                rows={captionRows}
+                placeholder="Caption"
+                onChange={handleMessageInput}
+                value={messageText}
+                onKeyDown={handleMessageKeyDown}
+            />
+
+            <img src={attachmentImage} 
+                  style={{...attachmentButton, position:`relative`, left:`5%`, top:`50%`}}
+                  onClick={handleAttachmentButton}
+            />
+
+            {imgElements}
+
+            {/* <button className='type-bar-button' 
+                style={{...typeBarButton, left:`75%`}} 
+                onClick={handleSendMessage}>
+                Send
+            </button> */}
         </div>
-        <textarea      
-        //   onKeyDown={handleMessageInput}
-            className='type-bar-input' // Set rows to 1 to make it look like an input field
-            style={{...textAreaStyle,...captionTextBox  }}
-            rows={captionRows}
-            placeholder="Caption"
-            onChange={handleMessageInput}
-            value={messageText}
-            onKeyDown={handleMessageKeyDown}
-        />
+  
 
-        <img src={attachmentImage} 
-              style={{...attachmentButton, left:`5%`}}
-              onClick={handleAttachmentButton}
-        />
-
-        {imgElements}
+  
 
         <button className='type-bar-button' 
                 style={{...typeBarButton, left:`75%`}} 
                 onClick={handleSendMessage}>
                 Send
         </button>
+
+
       </div>
 
 
@@ -851,7 +919,7 @@ const attachmentButton = {
         {/* {handleMessageView(messages)}  */}
         {/* {handleMessageView(newMessage)} */}
       </div>
-      <div className='type-bar-container'>
+      <div className='type-bar-container' style={{position:`relative`}}>
         {handleMessageTextBox()}
         {handleAttachmentView()}
       </div>

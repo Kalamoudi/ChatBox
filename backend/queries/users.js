@@ -47,9 +47,10 @@ const getReceiverUsersBySenderId = (app, connection) => {
         const {senderId} = req.params;
         const table1 = 'chats'
         const table2 = 'users'
+        const table3 = 'profile_picture'
 
         const queryString = `
-        SELECT DISTINCT u.user_id, u.username
+        SELECT DISTINCT u.user_id, u.username, u.ProfilePictureId
         FROM ${table1} c
         JOIN ${table2} u ON c.receiverId = u.user_id
         WHERE c.senderId = ${senderId} 
@@ -69,6 +70,7 @@ const getReceiverUsersBySenderId = (app, connection) => {
     });
 
 }
+
 
 module.exports = {
     getUserById,

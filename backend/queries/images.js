@@ -24,6 +24,7 @@ const getNextImageListId = (app, connection) => {
     });
 }
 
+
 const postImageListEntries = (app, connection) => {
     app.post('/chatbox/imageList', async (req, res) => {
         try{
@@ -87,9 +88,7 @@ const postImage = (app, connection) => {
         }
     
     })
-
 }
-
 
 module.exports = {
     getNextImageListId,
