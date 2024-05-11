@@ -104,7 +104,7 @@ function ChatList(props) {
                 console.log(response.data)
                 response.data.map(entry => {
                      const imgName = entry.ProfilePicture
-                     const imagePath = 'http://localhost:5000/AllProfilePictures/' + imgName;
+                     const imagePath = `${apiBaseUrl}/AllProfilePictures/` + imgName;
                      ppDict[entry.ID] = imagePath
                 })
 
@@ -252,7 +252,7 @@ function ChatList(props) {
 
   const handleImageUpload = () => {
     // Programmatically click on the file input element
-    document.getElementById('fileInput').click();
+    document.getElementById('profilePicInput').click();
   };
 
     const handleFileSelect = (event) => {
@@ -322,7 +322,7 @@ function ChatList(props) {
 
         htmlElements.push(
             <div>
-                 <input id="fileInput" type="file" style={{display: `none`}} onChange={handleFileSelect} />
+                 <input id="profilePicInput" type="file" style={{display: `none`}} onChange={handleFileSelect} />
                 <p onClick={() => handleAttachmentButton()}>Change profile</p>
             </div>
         )

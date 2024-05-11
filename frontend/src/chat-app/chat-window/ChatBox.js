@@ -32,6 +32,9 @@ function ChatBox(props, {onClick}) {
   const [charWidth, setCharWidth] = useState(0)
   const [charHeight, setCharHeight] = useState(0)
   const [filesLength, setFilesLength] = useState(0)
+  const [messageImagesDictionary, setMessageImagesDictionary] = useState({})
+  const [messageImagesIds, setMessageImagesIds] = useState(new Set())
+  const [initialMessages, setInitialMessages] = useState([])
 
   let previousDate = ""
   let currentMessagesSize = 0
@@ -86,19 +89,23 @@ function ChatBox(props, {onClick}) {
     if(imgList.length > 0){
         const endpoint = `${apiBaseUrl}/imageList`
         const response = await axios.get(endpoint)
-      //  console.log(response.status)
+
         if(response.status===200){
-        //    console.log("REACHED HERE")
+
             imageListId = response.data[0]["Ids"] + 1
             const messageId = response.data[1]["Ids"] + 1
 
-       //     console.log(response.data)
+            // Checks for every image in attachment window
             for(let imgData of imgList) {
 
               const imgJSON = {
                 ImageData: imgData.url,
                 ImageListId: imageListId,
+                Height: imgData.height,
+                Widgth: imgData.width
               }
+              
+              
               await fetch(`${apiBaseUrl}/images`, {
                 method: 'POST',
                 headers: {
@@ -153,16 +160,62 @@ function ChatBox(props, {onClick}) {
     setCharHeight(cHeight)
   }, [])
 
- // Fetch data
+
+
+ // Fetch Messages
   useEffect(() => {
     const fetchMessages = async () => {
       try{
+        setMessageImagesIds(new Set())
         const endpoint = `${apiBaseUrl}/messages/${senderId}/${receiverId}`
-        const response = await axios.get(endpoint)
-        if(response.data){
-         // console.log(response.data)
-          currentMessagesSize = response.data.length  
-          setRenderedMessages(handleMessageView(response.data))
+        const messageResponse = await axios.get(endpoint)
+        const imageSet = new Set()
+
+        if(messageResponse.data){
+
+          messageResponse.data.map((entry) => {
+            if(entry.ImageListId > 0){
+                imageSet.add(entry.ImageListId)
+            }
+          })
+
+          currentMessagesSize = messageResponse.data.length  
+
+          // Image part below
+
+          if(imageSet.size === 0){
+            setRenderedMessages(handleMessageView(messageResponse.data))
+            return
+          }
+
+          setInitialMessages(messageResponse.data)
+
+          const imageIdsList = Array.from(imageSet)
+    
+          const imageDict = {}
+   
+    
+          imageIdsList.map((id) => {
+              imageDict[id] = []
+          })
+    
+    
+          const endpoint = `${apiBaseUrl}/messages/${senderId}/${receiverId}/idList`
+          
+          const response = await axios.post(endpoint, {
+            idList: imageIdsList
+          });
+          
+          response.data.map(entry => {
+                if(entry.ImageListId > 0){
+                  const imgName = entry.ImageData
+                  const imagePath = `${apiBaseUrl}/AllMessagesImages/` + imgName;
+                  imageDict[entry.ImageListId].push(imagePath)
+                }
+          })
+    
+          setMessageImagesDictionary(imageDict)
+          
         }
       } catch(error){
         console.error('Error fetching chat information', error)
@@ -175,15 +228,57 @@ function ChatBox(props, {onClick}) {
 
 
 
+
+  // Constant fetching for real time update
   useEffect(() => {
     const fetchMessages = async () => {
       try{
         const endpoint = `${apiBaseUrl}/messages/${senderId}/${receiverId}`
-        const response = await axios.get(endpoint)
-        if(response.data && response.data.length > currentMessagesSize){
-       //   console.log(response.data)
-          currentMessagesSize = response.data.length  
-          setRenderedMessages(handleMessageView(response.data))
+        const messageResponse = await axios.get(endpoint)
+        if(messageResponse.data && messageResponse.data.length > currentMessagesSize){
+          currentMessagesSize = messageResponse.data.length
+
+
+          const imageSet = new Set()
+
+          messageResponse.data.map((entry) => {
+            if(entry.ImageListId > 0){
+                imageSet.add(entry.ImageListId)
+            }
+          })
+
+          setInitialMessages(messageResponse.data)
+
+          
+          const imageIdsList = Array.from(imageSet)
+          const imageDict = {}
+    
+          imageIdsList.map((id) => {
+              imageDict[id] = []
+          })
+    
+    
+          const endpoint = `${apiBaseUrl}/messages/${senderId}/${receiverId}/idList`
+          
+          const response = await axios.post(endpoint, {
+            idList: imageIdsList
+          });
+          
+            
+
+          response.data.map(entry => {
+                if(entry.ImageListId > 0){
+                  const imgName = entry.ImageData
+                  const imagePath = `${apiBaseUrl}/AllMessagesImages/` + imgName;
+                  imageDict[entry.ImageListId].push(imagePath)
+                }
+          })
+    
+          setMessageImagesDictionary(imageDict)
+          
+
+          setRenderedMessages(handleMessageView(messageResponse.data))
+
         }
       } catch(error){
         console.error('Error fetching chat information', error)
@@ -195,6 +290,12 @@ function ChatBox(props, {onClick}) {
       setMessageText('');
       fetchMessages();
   }, [receiverId]);
+
+  
+  useEffect(() => {
+    setRenderedMessages(handleMessageView(initialMessages))
+  }, [messageImagesDictionary, initialMessages])
+
 
 
 
@@ -262,7 +363,6 @@ function ChatBox(props, {onClick}) {
   useEffect(() => {
 
     if(imgList.length > 0){
-    //   console.log(imgList)
        setAttachImage(imgList[imgList.length-1])
     }
   }, [imgList])
@@ -419,7 +519,6 @@ function ChatBox(props, {onClick}) {
           }
       })
 
-    //  console.log(formatMessage)
 
       return formattedMessage;
   };
@@ -433,67 +532,122 @@ function ChatBox(props, {onClick}) {
     let widthUnit = 1
     let heightUnit = 1
     const extraSpace = letterWidth*8
+   
 
-    const msg = {
-
-        margin: `4px`,
-        padding: `5px`,
-        paddingLeft: '7px',
-        // maxWidth: `${fontWidth*7}%`, // max-width changed to maxWidth
-        display: 'flex',
-        borderRadius: `5px`, // border-radius changed to borderRadius
-        alignItems: 'center',
-        overflow: 'visible',
-        
+    const msgContainer = () => {
+        return {
+          position: `relative`,
+          margin: `4px`,
+          padding: `5px`,
+          paddingLeft: '7px',
+          borderRadius: `5px`, // border-radius changed to borderRadius
+       //   maxHeight: '100%'
+ 
+      }
     }
 
-    const MsgStyle = (widthUnit, heightUnit) => {
+    const messageStyle = {
+      position: `relative`,
+      top: `-17px`,
+      whiteSpace: 'pre-wrap',
+    }
+
+    const senderContainer = (widthUnit, heightUnit) => {
         return {
             width: `${widthUnit}px`,
             backgroundColor: '#dcf8c6',
             alignSelf: 'flex-end',
-            height: `${heightUnit}px`
-          //  height: 'auto'
+            height: `${heightUnit}px`,
         }
     };
 
-    const MsgOtherStyle = (widthUnit, heightUnit) => {
+    const receiverContainer = (widthUnit, heightUnit) => {
         return{
             width: `${widthUnit}px`,
             backgroundColor: '#cce5ff',
             alignSelf: 'flex-start',
-            justifySelf: 'left',
             height: `${heightUnit}px`,
-           // minHeight: '80%',
 
         }
     };
 
+
+  const chatImagesStyle = (widthUnit) => {
+  
+      return{
+        position: `relative`,
+        width: `${widthUnit}px`,
+        height: `auto`,
+        left: `${widthUnit/2}px`,
+      //  top: `100%`,
+        bottom: `25px`,
+       // alignItems: `center`,
+        alignSelf: `center`,
+        transform: `translate(-50%, 0%)`
+
+      }
+  }
 
 
     const htmlElements = []
     
     heightUnit = 0
+    let topPosition = 60
+
+
     messages.map((message, index) => {
         
         const msgTextArray = formatMessage(message.content)
 
         const [longestTextWidth, h] = getTextWidth(msgTextArray)
 
-        heightUnit =  letterHeight*(msgTextArray.length) + 5
-
+        heightUnit =  letterHeight*(msgTextArray.length)
         widthUnit = longestTextWidth + extraSpace
+
         if(msgTextArray.length > 1){
           widthUnit =  Math.max(extraSpace, longestTextWidth + letterWidth*2)
-          heightUnit += letterHeight + 50
+          heightUnit += 15
+
+        }
+
+        let hasMessage = false
+        let imgPath = ''
+
+        let chatImageStyle = chatImagesStyle(100, 100)
+        
+        if(message.ImageListId > 0){
+
+         // widthUnit = Math.min(widthUnit+100, 100)
+          hasMessage = true
+          if(messageImagesDictionary[message.ImageListId]){
+            imgPath = messageImagesDictionary[message.ImageListId][0]
+   
+          }
+
+          const img = new Image()
+          img.src = imgPath
+
+
+          
+          const newRatio = 400
+          const imgWidth = Math.min(img.width, newRatio)
+          chatImageStyle = chatImagesStyle(imgWidth)
+
+          heightUnit += img.height*newRatio/imgWidth
+          widthUnit =  Math.max(extraSpace, longestTextWidth + letterWidth*2)
+          if(imgWidth > widthUnit){
+            widthUnit = imgWidth 
+          }
+
 
         }
         
-        
-        const msgStyle = MsgStyle(widthUnit, heightUnit)
-        const msgOtherStyle = MsgOtherStyle(widthUnit, heightUnit)
-        let classN = message.senderId === senderId ? msgStyle : msgOtherStyle
-        const combinedDic = { ...msg, ...classN };
+        heightUnit = Math.round(heightUnit)
+        const senderC = senderContainer(widthUnit, heightUnit)
+        const receiverC = receiverContainer(widthUnit, heightUnit)
+        const classN = message.senderId === senderId ? senderC : receiverC
+        const combinedDic = { ...msgContainer(), ...classN };
+
 
 
 
@@ -517,6 +671,7 @@ function ChatBox(props, {onClick}) {
           //setPreviousDate(newDate)
           previousDate = newDate
           showDate = getDaySeperatorDate(newDate)
+
         
 
           htmlElements.push(
@@ -526,20 +681,31 @@ function ChatBox(props, {onClick}) {
           )
         }
 
+
+
         let topMargin = 0
         if(index > 0 && messages[index-1].senderId !== messages[index].senderId){
-          topMargin =  25 
+          topMargin =  25
         }
 
         htmlElements.push(
-            <div key={index} style={{...combinedDic, position: 'relative', marginTop: `${topMargin}px`}}>
+            <div key={index} style={{...combinedDic, marginTop: `${topMargin}px`}}>
                 {/* <p>{msgText}</p> */}
-                <p style={{whiteSpace: 'pre-wrap', top:'5px'}}>
+                <p style={messageStyle}>
                   {
                     msgTextArray.map((line, index) => 
-                    <span key={index}>{line}<br /></span>)
+                      <span key={index}>{line}<br /></span>
+                  )       
                   }
                 </p>
+                <br/>
+                {hasMessage ? 
+                        <img     
+                          src={imgPath}
+                          style={chatImageStyle}
+                        />
+                 :null}
+
                 <p style={{ color: 'grey', fontSize: '12px', position: 'absolute', bottom: -10, right: 10 }}>{formattedTime}</p>
             </div>
         )
@@ -558,14 +724,13 @@ function ChatBox(props, {onClick}) {
 
     setShiftSender(shiftSender === senderId ? receiverId : senderId)
     setSenderId(shiftSender)
-   // console.log(window.innerWidth)
+
 
   };
 
 
   const handleAttachmentButton = () => {
 
-    //console.log("Attachment Button Pressed")
     handleImageUpload()
 
   }
@@ -583,30 +748,25 @@ function ChatBox(props, {onClick}) {
 
     const file = event.target.files[0];
     
-   // console.log(event.target.files)
 
+    const imgPath =  file.name
     const img = new Image();
-    const imgUrl = URL.createObjectURL(file)
-    img.src = imgUrl
-    img.onload = () => {
-    //  console.log("Height: " + img.height)
-      const imgData = {
-        data: file,
-        width: img.width,
-        height: img.height,
-        url: imgUrl
-      }
-  
-      if(!imgList.some(item => item.data.name === imgData.data.name)){
-          setImgList([...imgList, imgData])
-          setAttachImage(imgData)
-      }
+    img.src = imgPath
+
+    const imgData = {
+      data: file,
+      width: img.width,
+      height: img.height,
+      url: imgPath
     }
+
+    if(!imgList.some(item => item.data.name === imgData.data.name)){
+        setImgList([...imgList, imgData])
+        setAttachImage(imgData)
+    }
+    
   
 
-    
-    //setImgList([...imgList, {image: file, width: iWidth, height: iHeight}]);
-    
 
   };
 
@@ -630,11 +790,7 @@ const handleMessageTextBox = () => {
           {/* <button style={attachmentButton}></button> */}
 
           <input id="fileInput" type="file" style={{display: `none`}} onChange={handleFileSelect} />
-          {/* <div>
-            {imgObjectList.map((image, index) => (
-              <img key={index} src={image} alt={`Image ${index}`} style={imgAttachment} />
-            ))}
-          </div> */}
+
 
           <img src={attachmentImage} 
                style={attachmentButton}
@@ -642,7 +798,9 @@ const handleMessageTextBox = () => {
                />
 
 
-          <button className='type-bar-button' style={typeBarButton} onClick={handleSendMessage}>Send</button>
+          <button className='type-bar-button'
+                  style={typeBarButton} 
+              onClick={handleSendMessage}>Send</button>
           </div>
       )
 
@@ -815,11 +973,6 @@ const handleAttachmentView = () => {
 
             {imgElements}
 
-            {/* <button className='type-bar-button' 
-                style={{...typeBarButton, left:`75%`}} 
-                onClick={handleSendMessage}>
-                Send
-            </button> */}
         </div>
   
 
@@ -846,7 +999,11 @@ const textAreaStyle = {
  // width: `${windowWidth*(1-0.2)-chatListWidth}px`,
   width: `${(windowWidth*(1-0.2)-chatListWidth)}px`,
   resize: 'none',
-  maxWidth: `100%`
+  maxWidth: `100%`,
+  borderTopLeftRadius: `4px`, 
+  borderBottomLeftRadius: `4px`,
+  outline: `none`
+
 }
 
 const attachmentWhiteBox = {
@@ -890,7 +1047,9 @@ const chatBoxWindow = {
 
 const typeBarButton = {
   top: `${(textareaRows-2)*15.25}px`,
-  left: `${windowWidth*(1-0.2)-chatListWidth}px`,
+  left: `${windowWidth*(1-0.2)-chatListWidth-4.2}px`,
+  borderTopRightRadius: `4px`, 
+  borderBottomRightRadius: `4px`,
 
   //left: `100%`
 
@@ -913,11 +1072,8 @@ const attachmentButton = {
   return (
     <div className='chatbox' style={chatBox}>
       <div className='chatbox-window' style ={chatBoxWindow} ref={chatBoxRef}>
-        {/* {handleMessageView(oldMessagesData)} */}
         {renderedMessages}
-        {/* {newMessage} */}
-        {/* {handleMessageView(messages)}  */}
-        {/* {handleMessageView(newMessage)} */}
+
       </div>
       <div className='type-bar-container' style={{position:`relative`}}>
         {handleMessageTextBox()}

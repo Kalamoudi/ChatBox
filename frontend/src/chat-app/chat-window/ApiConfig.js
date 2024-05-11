@@ -17,7 +17,8 @@ const getApiBaseUrl = () => {
     } else {
         // For requests from outside the local network (e.g., from the internet)
         // Use the public IP address of your server
-        return 'http://51.211.41.46:5000/chatbox';
+        // return 'http://51.211.41.46:5000/chatbox';
+        return 'http://169.148.110.201:5000/chatbox';
     }
     
     

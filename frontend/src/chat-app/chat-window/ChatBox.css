@@ -1,5 +1,6 @@
   .chatbox-window {
     /* height: 90%; */
+    /* position: relative; */
     padding: 10px;
     display: flex;
     overflow-y: scroll;
@@ -83,3 +84,11 @@
   }
 
 
+
+  .test {
+    border-top: 2px rgb(33, 44, 49);
+    color: rgb(240, 240, 240);
+    position: fixed;
+    
+
+  }

@@ -28,7 +28,8 @@ app.use(cors({
     credentials: true
 }));
 
-app.use('/AllProfilePictures', express.static('C:\\Users\\Khalid\\Documents\\Workspaces-VSC\\SelfProjects\\images_for_simple-react-app'));
+app.use('/chatbox/AllProfilePictures', express.static('C:\\Users\\Khalid\\Documents\\Workspaces-VSC\\SelfProjects\\images_for_simple-react-app'));
+app.use('/chatbox/AllMessagesImages', express.static('C:\\Users\\Khalid\\Documents\\Workspaces-VSC\\SelfProjects\\images_for_simple-react-app\\messagesImages'));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
@@ -56,6 +57,7 @@ connection.connect((err) => {
 messageQuery.getMessagesBySenderIdAndReceiverId(app, connection)
 messageQuery.getAllMessages(app, connection)
 messageQuery.postMessagesBySenderIdAndReceiverId(app, connection)
+messageQuery.getMessageImagesByIds(app, connection)
 chatQuery.getChatsBySenderId(app, connection)
 userQuery.getAllUsers(app, connection)
 userQuery.getUserById(app, connection)
