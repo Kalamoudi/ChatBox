@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './ChatList.css';
-import ClipboardPaste from '../../clipboardCopyPaste/clipboardPaste'
+import ClipboardPaste from '../../../clipboardCopyPaste/clipboardPaste'
 import axios from 'axios';
-import { apiBaseUrl } from './ApiConfig';
-import emptyProfilePicture from '../../assets/icons/chatapp/initial-profile-picture-nobg.png'
+import { apiBaseUrl } from '../ApiConfig';
+import emptyProfilePicture from '../../../assets/icons/chatapp/initial-profile-picture-nobg.png'
 
 function ChatList(props) {
 

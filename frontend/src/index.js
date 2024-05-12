@@ -7,7 +7,6 @@ import Product from './Product'
 import FetchHorses from './FetchHorses';
 import BlockBreaker from './block-breaker/BlockBreaker';
 import ChatWindow from './chat-app/chat-window/ChatWindow'
-import ChatBox from './chat-app/chat-window/ChatBox';
 import ChatSignIn from './chat-app/chat-window/ChatSignIn';
 import ChatSignUp from './chat-app/chat-window/ChatSignUp';
 

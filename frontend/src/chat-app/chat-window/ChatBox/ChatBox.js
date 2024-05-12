@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ChatBox.css';
 import axios from 'axios';
-import { apiBaseUrl } from './ApiConfig';
-import attachmentImage from '../../assets/icons/chatapp/attachment-icon.png'
-import closeIcon from '../../assets/icons/chatapp/close-icon.png'
+import { apiBaseUrl } from '../ApiConfig';
+import attachmentImage from '../../../assets/icons/chatapp/attachment-icon.png'
+import closeIcon from '../../../assets/icons/chatapp/close-icon.png'
+import handleImageAttachment from '../../utils/handleImageAttachment'
 
 function ChatBox(props, {onClick}) {
+
+
 
   const {senderId, setSenderId, receiverId, serReceiverId} = props
 
@@ -15,7 +18,6 @@ function ChatBox(props, {onClick}) {
   const [chatListWidth, setChatListWidth] = useState(window.innerWidth*chatListWidthFraction)
   const [chatBoxWidth, setChatBoxWidth] = useState(window.innerWidth*(1-chatListWidthFraction))
   const [imgList, setImgList] = useState([])
-  const [imgData, setImgData] = useState('')
   const [attachImage, setAttachImage] = useState(null)
   const attachContrainerRef = useRef(null)
 
@@ -96,13 +98,13 @@ function ChatBox(props, {onClick}) {
             const messageId = response.data[1]["Ids"] + 1
 
             // Checks for every image in attachment window
-            for(let imgData of imgList) {
+            for(let img of imgList) {
 
               const imgJSON = {
-                ImageData: imgData.url,
+                ImageData: img.path,
                 ImageListId: imageListId,
-                Height: imgData.height,
-                Widgth: imgData.width
+                Height: img.height,
+                Widgth: img.width
               }
               
               
@@ -249,7 +251,7 @@ function ChatBox(props, {onClick}) {
 
           setInitialMessages(messageResponse.data)
 
-          
+
           const imageIdsList = Array.from(imageSet)
           const imageDict = {}
     
@@ -629,14 +631,15 @@ function ChatBox(props, {onClick}) {
 
 
           
-          const newRatio = 400
-          const imgWidth = Math.min(img.width, newRatio)
-          chatImageStyle = chatImagesStyle(imgWidth)
+          const newRatio = windowWidth*0.4
+          const containerWidth = Math.min(img.width, newRatio)
+          chatImageStyle = chatImagesStyle(widthUnit)
 
-          heightUnit += img.height*newRatio/imgWidth
+          heightUnit += img.height*newRatio/containerWidth
           widthUnit =  Math.max(extraSpace, longestTextWidth + letterWidth*2)
-          if(imgWidth > widthUnit){
-            widthUnit = imgWidth 
+          if(containerWidth > widthUnit){
+            chatImageStyle = chatImagesStyle(containerWidth)
+            widthUnit = containerWidth 
           }
 
 
@@ -717,17 +720,6 @@ function ChatBox(props, {onClick}) {
 
   }
 
-  const handleSenderChange = () => {
-    // const newId = senderId === 1 ? 2 : 1
-    // setSenderId(newId)
-    // setSender(userData[newId].username);
-
-    setShiftSender(shiftSender === senderId ? receiverId : senderId)
-    setSenderId(shiftSender)
-
-
-  };
-
 
   const handleAttachmentButton = () => {
 
@@ -751,19 +743,37 @@ function ChatBox(props, {onClick}) {
 
     const imgPath =  file.name
     const img = new Image();
-    img.src = imgPath
 
-    const imgData = {
-      data: file,
-      width: img.width,
-      height: img.height,
-      url: imgPath
-    }
+    const imgUrl = URL.createObjectURL(file)
 
-    if(!imgList.some(item => item.data.name === imgData.data.name)){
-        setImgList([...imgList, imgData])
-        setAttachImage(imgData)
-    }
+    img.src = imgUrl
+
+    // const imgData = {
+    //   data: file,
+    //   width: img.width,
+    //   height: img.height,
+    //   path: imgPath,
+    //   object: imgUrl,
+    // }
+
+    // if(!imgList.some(item => item.data.name === imgData.data.name)){
+    //     setImgList([...imgList, imgData])
+    //     setAttachImage(imgData)
+    // }
+
+    img.onload = function() {
+      const imgData = {
+        data: file,
+        width: img.width,
+        height: img.height,
+        url: imgUrl
+      };
+
+      if (!imgList.some(item => item.data.name === imgData.data.name)) {
+        setImgList([...imgList, imgData]);
+        setAttachImage(imgData);
+      }
+    };
     
   
 
@@ -821,7 +831,7 @@ const handleAttachmentView = () => {
 
 
   if(imgList.length === 0){
-    return
+      return
   }
 
   const imgHeight = Math.min((attachImage.height*windowHeight*0.4/attachImage.width), windowHeight*0.7)
@@ -837,13 +847,11 @@ const handleAttachmentView = () => {
   const textBoxHeight = 36
 
   const attachmentContainer = {
-    position: `relative`,
-    width: `${containerWidth+90}px`,
-    backgroundColor: `#6d93a3`,
-    left: `2%`,
-    borderRadius: `5px`,
-    
-
+      position: `relative`,
+      width: `${containerWidth+90}px`,
+      backgroundColor: `#6d93a3`,
+      left: `2%`,
+    //  borderRadius: `5px`,
   }
 
   let upper = 0.715*charHeight*(captionRows-2)
@@ -851,12 +859,16 @@ const handleAttachmentView = () => {
 
   const upperContainer = {
     position: `fixed`,
-    height: `${containerHeight}px`,
+    height: `${containerHeight + 50}px`,
     // bottom: `${containerHeight+101+upper}px`,  // 315
     bottom: `${lowerContainerBottom + lowerContainerHeight }px`,
     left: `${chatListWidth+18}px`,
-    borderRadius: `2px`,
-    border: `2px solid rgb(83, 109, 119)`
+    borderTopLeftRadius: `5px`,
+    borderTopRightRadius: `5px`,
+    borderTop: `2px solid rgb(83, 109, 119)`,
+    borderLeft: `2px solid rgb(83, 109, 119)`,
+    borderRight: `2px solid rgb(83, 109, 119)`,
+    borderBottom: `3.5px solid rgb(83, 109, 119)`,
     
   }
 
@@ -867,19 +879,24 @@ const handleAttachmentView = () => {
     bottom: `${lowerContainerBottom}px`,
     left: `${chatListWidth + 18}px`,
     borderTop: `1px solid rgb(83, 109, 119)`,
-    borderRadius: `0px`,
-    border: `2px solid rgb(83, 109, 119)`
+    borderBottomLeftRadius: `5px`,
+    borderBottomRightRadius: `5px`,
+    borderBottom: `2px solid rgb(83, 109, 119)`,
+    borderLeft: `2px solid rgb(83, 109, 119)`,
+    borderRight: `2px solid rgb(83, 109, 119)`,
+    
     //top: `-13.5%`
   }
 
   const captionTextBox = {
     position: `relative`,
-    left: `4%`, 
-    width: `${containerWidth}px`,
+    left: `50%`, 
+    width: `${containerWidth*0.7}px`,
+    transform: `translate(-50%, 0%)`,
     // bottom: `${lowerContainerHeight+700}px`,
     // bottom: `${lowerContainerBottom + lowerContainerHeight - textBoxHeight - 8}px`,
     // left: `${chatListWidth + 18 + 10}px`,
-    top: `5%`,
+    top: `10%`,
 
     
   }
@@ -894,7 +911,8 @@ const handleAttachmentView = () => {
     maxHeight: `${imgHeight}px`,
     transform: `translate(-50%, 0%)`,
     left: `${fullContainerWidth/2}px`,
-    top: `${containerHeight/2}px`,
+  //  top: `${containerHeight/2}px`,
+    top: `50%`,
     transform: `translate(-50%, -50%)`,
     cursor: `pointer`,
   }
@@ -911,11 +929,12 @@ const handleAttachmentView = () => {
     cursor: `pointer`,
   }
 
-  imgList.map((imgData, index) => {
+  imgList.map((img, index) => {
+    console.log("Image Height: ", img.height)
     imgElements.push(
-      <img key={index} src={imgData.url} alt={`Image ${index}`}
+      <img key={index} src={img.url} alt={`Image ${index}`}
            style={{...smallImgStyle, left: `${fullContainerWidth/2 - 25*imgList.length + index*15}px`}}
-           onClick={() => setAttachImage(imgData)}
+           onClick={() => setAttachImage(img)}
       />
     )
   })
@@ -926,8 +945,8 @@ const handleAttachmentView = () => {
     position: `relative`,
     width: `15px`,
     height: `auto`,
-    alignItems: `center`,
     cursor: `pointer`,
+    transform: `translate(0%, 50%)`
 }
 
 
@@ -939,7 +958,7 @@ const handleAttachmentView = () => {
         <div style={{...attachmentContainer, ...upperContainer, }}>
 
 
-          <img src={attachImage.url} 
+          <img src={attachImage.url}
                style={imgStyle}
           
           

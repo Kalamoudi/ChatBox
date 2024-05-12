@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './ChatWindow.css';
 import ClipboardPaste from '../../clipboardCopyPaste/clipboardPaste'
 import axios from 'axios';
-import ChatBox from './ChatBox';
-import ChatList from './ChatList';
+import ChatBox from './ChatBox/ChatBox';
+import ChatList from './ChatList/ChatList';
 import ChatSignIn from './ChatSignIn';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
