@@ -62,15 +62,15 @@ const postImage = (app, connection) => {
 
     app.post('/chatbox/images', async (req, res) => {
         try {
-            const {ImageData, ImageListId} = req.body
+            const {ImageData, ImageListId, Height, Width} = req.body
 
             const tablename = 'images'
             const queryString = `
-                INSERT INTO ${tablename} (ImageData, ImageListId)
-                VALUES (?, ?)
+                INSERT INTO ${tablename} (ImageData, ImageListId, Height, Width)
+                VALUES (?, ?, ?, ?)
             `;
 
-            const values = [ImageData, ImageListId]
+            const values = [ImageData, ImageListId, Height, Width]
 
             connection.query(queryString, values, (err, result) => {
                 if (err) {

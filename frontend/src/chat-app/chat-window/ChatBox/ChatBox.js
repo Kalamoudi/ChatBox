@@ -86,6 +86,7 @@ function ChatBox(props, {onClick}) {
 
 
     let imageListId = 0
+    let messageId = 1
 
 
     if(imgList.length > 0){
@@ -94,8 +95,14 @@ function ChatBox(props, {onClick}) {
 
         if(response.status===200){
 
-            imageListId = response.data[0]["Ids"] + 1
-            const messageId = response.data[1]["Ids"] + 1
+            imageListId = 1
+
+            if(response.data[0]["Ids"] !== null){
+              imageListId = response.data[0]["Ids"] + 1
+              messageId = response.data[1]["Ids"] + 1
+            }
+            console.log(response.data)
+          
 
             // Checks for every image in attachment window
             for(let img of imgList) {
@@ -104,7 +111,7 @@ function ChatBox(props, {onClick}) {
                 ImageData: img.path,
                 ImageListId: imageListId,
                 Height: img.height,
-                Widgth: img.width
+                Width: img.width
               }
               
               
@@ -119,7 +126,7 @@ function ChatBox(props, {onClick}) {
             const imgListsJSON = {
               ImageListId: imageListId,
               MessageId: messageId,
-              
+
             }
 
             await fetch(`${apiBaseUrl}/imageList`, {
@@ -134,9 +141,11 @@ function ChatBox(props, {onClick}) {
 
         setImgList([])
 
+        
+
     }
 
-  
+    console.log("image list Id: " + imageListId)
     const messageJSON = {
       senderId: sender,
       receiverId: receiver,
@@ -152,6 +161,9 @@ function ChatBox(props, {onClick}) {
       },
       body: JSON.stringify(messageJSON),
     });
+
+
+
   }
 
 
@@ -164,7 +176,7 @@ function ChatBox(props, {onClick}) {
 
 
 
- // Fetch Messages
+ // Fetch initial Messages and images
   useEffect(() => {
     const fetchMessages = async () => {
       try{
@@ -211,12 +223,18 @@ function ChatBox(props, {onClick}) {
           response.data.map(entry => {
                 if(entry.ImageListId > 0){
                   const imgName = entry.ImageData
-                  const imagePath = `${apiBaseUrl}/AllMessagesImages/` + imgName;
-                  imageDict[entry.ImageListId].push(imagePath)
+                  const imageData = {
+                    ImagePath: `${apiBaseUrl}/AllMessagesImages/` + imgName,
+                    Height: entry.Height,
+                    Width: entry.Width,
+                  }
+                //  const imagePath = `${apiBaseUrl}/AllMessagesImages/` + imgName;
+                  imageDict[entry.ImageListId].push(imageData)
                 }
           })
     
           setMessageImagesDictionary(imageDict)
+        //  setRenderedMessages(handleMessageView(initialMessages))
           
         }
       } catch(error){
@@ -272,7 +290,13 @@ function ChatBox(props, {onClick}) {
                 if(entry.ImageListId > 0){
                   const imgName = entry.ImageData
                   const imagePath = `${apiBaseUrl}/AllMessagesImages/` + imgName;
-                  imageDict[entry.ImageListId].push(imagePath)
+                  const imageData = {
+                    ImagePath: `${apiBaseUrl}/AllMessagesImages/` + imgName,
+                    Height: entry.Height,
+                    Width: entry.Width,
+                  }
+                //  const imagePath = `${apiBaseUrl}/AllMessagesImages/` + imgName;
+                  imageDict[entry.ImageListId].push(imageData)
                 }
           })
     
@@ -295,7 +319,7 @@ function ChatBox(props, {onClick}) {
 
   
   useEffect(() => {
-    setRenderedMessages(handleMessageView(initialMessages))
+      setRenderedMessages(handleMessageView(initialMessages))
   }, [messageImagesDictionary, initialMessages])
 
 
@@ -582,7 +606,7 @@ function ChatBox(props, {onClick}) {
         height: `auto`,
         left: `${widthUnit/2}px`,
       //  top: `100%`,
-        bottom: `25px`,
+        bottom: `45px`,
        // alignItems: `center`,
         alignSelf: `center`,
         transform: `translate(-50%, 0%)`
@@ -615,27 +639,31 @@ function ChatBox(props, {onClick}) {
         let hasMessage = false
         let imgPath = ''
 
-        let chatImageStyle = chatImagesStyle(100, 100)
+        let chatImageStyle = chatImagesStyle(widthUnit)
         
         if(message.ImageListId > 0){
 
          // widthUnit = Math.min(widthUnit+100, 100)
           hasMessage = true
-          if(messageImagesDictionary[message.ImageListId]){
-            imgPath = messageImagesDictionary[message.ImageListId][0]
+          let imgHeight = 100
+          let imgWidth = 100
+          if(messageImagesDictionary[message.ImageListId] &&
+            messageImagesDictionary[message.ImageListId][0]
+          ){
+          //  imgPath = messageImagesDictionary[message.ImageListId][0]
+            console.log(messageImagesDictionary[message.ImageListId][0])
+            imgPath = messageImagesDictionary[message.ImageListId][0].ImagePath
+            imgHeight = messageImagesDictionary[message.ImageListId][0].Height
+            imgWidth = messageImagesDictionary[message.ImageListId][0].Width
    
           }
-
-          const img = new Image()
-          img.src = imgPath
-
-
+    
           
-          const newRatio = windowWidth*0.4
-          const containerWidth = Math.min(img.width, newRatio)
-          chatImageStyle = chatImagesStyle(widthUnit)
+          const maxWidth = windowWidth*0.4
+          const containerWidth = Math.min(imgWidth, maxWidth)
+      //    chatImageStyle = chatImagesStyle(widthUnit)
 
-          heightUnit += img.height*newRatio/containerWidth
+          heightUnit += imgHeight*maxWidth/imgWidth + 30
           widthUnit =  Math.max(extraSpace, longestTextWidth + letterWidth*2)
           if(containerWidth > widthUnit){
             chatImageStyle = chatImagesStyle(containerWidth)
@@ -748,24 +776,13 @@ function ChatBox(props, {onClick}) {
 
     img.src = imgUrl
 
-    // const imgData = {
-    //   data: file,
-    //   width: img.width,
-    //   height: img.height,
-    //   path: imgPath,
-    //   object: imgUrl,
-    // }
-
-    // if(!imgList.some(item => item.data.name === imgData.data.name)){
-    //     setImgList([...imgList, imgData])
-    //     setAttachImage(imgData)
-    // }
 
     img.onload = function() {
       const imgData = {
         data: file,
         width: img.width,
         height: img.height,
+        path: imgPath,
         url: imgUrl
       };
 
@@ -930,7 +947,6 @@ const handleAttachmentView = () => {
   }
 
   imgList.map((img, index) => {
-    console.log("Image Height: ", img.height)
     imgElements.push(
       <img key={index} src={img.url} alt={`Image ${index}`}
            style={{...smallImgStyle, left: `${fullContainerWidth/2 - 25*imgList.length + index*15}px`}}
