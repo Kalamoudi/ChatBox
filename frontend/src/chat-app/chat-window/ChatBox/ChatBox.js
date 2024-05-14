@@ -320,7 +320,7 @@ function ChatBox(props, {onClick}) {
   
   useEffect(() => {
       setRenderedMessages(handleMessageView(initialMessages))
-  }, [messageImagesDictionary, initialMessages])
+  }, [messageImagesDictionary, initialMessages, windowHeight])
 
 
 
@@ -361,26 +361,56 @@ function ChatBox(props, {onClick}) {
 
 
  // Resizing window
-  useEffect(() => {
-    const handleWindowResize = () => {
-        setWindowHeight(window.innerHeight);
-        setWindowWidth(window.innerWidth);
-        const chatLW = window.innerWidth * chatListWidthFraction;
-        setChatListWidth(chatLW);
-        setChatBoxWidth(window.innerWidth*(1-chatListWidthFraction))
-        setMaxWidth((window.innerWidth - chatLW) * maxWidthPercentage);
-    };
+//   useEffect(() => {
+//     const handleWindowResize = () => {
+//         setWindowHeight(window.innerHeight);
+//         setWindowWidth(window.innerWidth);
+//         const chatLW = window.innerWidth * chatListWidthFraction;
+//         setChatListWidth(chatLW);
+//         setChatBoxWidth(window.innerWidth*(1-chatListWidthFraction))
+//         setMaxWidth((window.innerWidth - chatLW) * maxWidthPercentage);
+//     };
 
-    // Attach event listener to handle window resize
-    window.addEventListener('resize', handleWindowResize);
+//     // Attach event listener to handle window resize
+//     window.addEventListener('resize', handleWindowResize);
 
-    handleWindowResize()
+//     handleWindowResize()
 
-    // Cleanup function to remove event listener when component unmounts
-    return () => {
-        window.removeEventListener('resize', handleWindowResize);
-    };
-}, []);
+//     // Cleanup function to remove event listener when component unmounts
+//     return () => {
+//         window.removeEventListener('resize', handleWindowResize);
+//     };
+// }, []);
+
+useEffect(() => {
+  const handleWindowResize = () => {
+      console.log("Window Resized"); // Add this line
+      const newWindowHeight = window.innerHeight;
+      const newWindowWidth = window.innerWidth;
+      const chatLW = newWindowWidth * chatListWidthFraction;
+      const newChatBoxWidth = newWindowWidth * (1 - chatListWidthFraction);
+      const newMaxWidth = (newWindowWidth - chatLW) * maxWidthPercentage;
+
+      setWindowHeight(newWindowHeight);
+      setWindowWidth(newWindowWidth);
+      setChatListWidth(chatLW);
+      setChatBoxWidth(newChatBoxWidth);
+      setMaxWidth(newMaxWidth);
+  };
+
+  // Attach event listener to handle window resize
+  window.addEventListener('resize', handleWindowResize);
+
+  // Initial call to set dimensions
+  handleWindowResize();
+
+  // Cleanup function to remove event listener when component unmounts
+  return () => {
+      window.removeEventListener('resize', handleWindowResize);
+  };
+}, [chatListWidthFraction, maxWidthPercentage]);
+
+
 
 
 
@@ -606,10 +636,12 @@ function ChatBox(props, {onClick}) {
         height: `auto`,
         left: `${widthUnit/2}px`,
       //  top: `100%`,
-        bottom: `45px`,
+        bottom: `30px`,
        // alignItems: `center`,
         alignSelf: `center`,
-        transform: `translate(-50%, 0%)`
+        transform: `translate(-50%, 0%)`,
+        borderRadius: '3px',
+        cursor: `pointer`,
 
       }
   }
@@ -641,34 +673,63 @@ function ChatBox(props, {onClick}) {
 
         let chatImageStyle = chatImagesStyle(widthUnit)
         
+        const imgElements = []
+
         if(message.ImageListId > 0){
 
          // widthUnit = Math.min(widthUnit+100, 100)
           hasMessage = true
           let imgHeight = 100
           let imgWidth = 100
-          if(messageImagesDictionary[message.ImageListId] &&
-            messageImagesDictionary[message.ImageListId][0]
-          ){
-          //  imgPath = messageImagesDictionary[message.ImageListId][0]
-            console.log(messageImagesDictionary[message.ImageListId][0])
-            imgPath = messageImagesDictionary[message.ImageListId][0].ImagePath
-            imgHeight = messageImagesDictionary[message.ImageListId][0].Height
-            imgWidth = messageImagesDictionary[message.ImageListId][0].Width
-   
+          index = 0
+          let firstImgHeight = 100
+          let firstImgWidth = 100
+
+          console.log(messageImagesDictionary)
+          if(messageImagesDictionary[message.ImageListId]){
+            messageImagesDictionary[message.ImageListId].map((image) => {
+              
+                
+                if(index === 0){
+               //     imgHeight += image.Height
+                    imgWidth = image.Width
+                 //   imgHeight = image.Height
+                    firstImgWidth = image.Width
+                    firstImgHeight = image.Height
+                }
+                
+              //  imgHeight += image.Height
+                
+                imgPath = image.ImagePath
+                index += 1
+             //    chatImageStyle = chatImagesStyle(widthUnit)
+
+                const maxWidth = windowWidth*0.4
+                const containerWidth = Math.min(firstImgWidth, maxWidth)
+                heightUnit += image.Height
+              //  widthUnit =  Math.max(extraSpace, longestTextWidth + letterWidth*2)
+                if(containerWidth > widthUnit){
+                  chatImageStyle = chatImagesStyle(containerWidth)
+                  widthUnit = containerWidth 
+                }
+                 
+
+                imgElements.push(
+                  <img     
+                      src={imgPath}
+                      style={chatImageStyle}
+                      onClick={()=> window.open(image.ImagePath, '_blank')}
+                    /> 
+                )
+                imgElements.push(
+                  <br/>
+                )
+            }) 
+
+           
           }
     
           
-          const maxWidth = windowWidth*0.4
-          const containerWidth = Math.min(imgWidth, maxWidth)
-      //    chatImageStyle = chatImagesStyle(widthUnit)
-
-          heightUnit += imgHeight*maxWidth/imgWidth + 30
-          widthUnit =  Math.max(extraSpace, longestTextWidth + letterWidth*2)
-          if(containerWidth > widthUnit){
-            chatImageStyle = chatImagesStyle(containerWidth)
-            widthUnit = containerWidth 
-          }
 
 
         }
@@ -719,6 +780,7 @@ function ChatBox(props, {onClick}) {
           topMargin =  25
         }
 
+
         htmlElements.push(
             <div key={index} style={{...combinedDic, marginTop: `${topMargin}px`}}>
                 {/* <p>{msgText}</p> */}
@@ -730,12 +792,13 @@ function ChatBox(props, {onClick}) {
                   }
                 </p>
                 <br/>
-                {hasMessage ? 
+                {/* {hasMessage ? 
                         <img     
                           src={imgPath}
                           style={chatImageStyle}
                         />
-                 :null}
+                 :null} */}
+                 {imgElements}
 
                 <p style={{ color: 'grey', fontSize: '12px', position: 'absolute', bottom: -10, right: 10 }}>{formattedTime}</p>
             </div>

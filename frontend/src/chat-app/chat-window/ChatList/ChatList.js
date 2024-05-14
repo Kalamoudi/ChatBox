@@ -291,10 +291,14 @@ function ChatList(props) {
 
         const chatListItem = {
             display: 'flex',
-            padding: `10px`,
+            paddingBottom: `10px`,
+            paddingTop: `10px`,
             marginBottom: `5px`,
             borderRadius: `2px`, // border-radius changed to borderRadius
-            backgroundColor: `rgb(110, 145, 159)`
+            backgroundColor: `rgb(110, 145, 159)`,
+            overflow: `hidden`,
+            whiteSpace: `nowrap`,
+            textOverflow: `ellipsis`,
         }
 
         const profilePictureStyle = {
@@ -302,8 +306,10 @@ function ChatList(props) {
             position: `relative`,
             width: `50px`,
             height: `50px`,
+            left: `${chatListWidth*0.02}px`,
             flexDirection: `column`,
-            borderRadius: `50px`
+            borderRadius: `50px`,
+            
         }
 
         const userNameStyle = {
