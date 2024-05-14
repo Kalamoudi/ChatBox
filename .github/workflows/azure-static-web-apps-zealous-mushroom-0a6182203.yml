@@ -16,8 +16,8 @@ jobs:
     name: Build and Deploy Job
     steps:
       - uses: actions/setup-node@v3
-          with:
-            node-version: '20' # specify the Node.js version here
+        with:
+          node-version: '20' # specify the Node.js version here
       - uses: actions/checkout@v3
         with:
           submodules: true
