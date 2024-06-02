@@ -4,15 +4,20 @@ import axios from 'axios';
 import { apiBaseUrl } from '../ApiConfig';
 import attachmentImage from '../../../assets/icons/chatapp/attachment-icon.png'
 import closeIcon from '../../../assets/icons/chatapp/close-icon.png'
-import handleImageAttachment from '../../utils/handleImageAttachment'
+import getFormattedTime from '../utils/formattedTime';
+import Var from '../../chat-variables/variables'
 
 function ChatBox(props, {onClick}) {
 
 
 
-  const {senderId, setSenderId, receiverId, serReceiverId} = props
 
-  const chatListWidthFraction = 0.2
+  const {
+    senderId, setSenderId, receiverId, setReceiverId,
+    chatListWidthFraction, setChatListWidthFraction
+} = props
+
+  //const chatListWidthFraction = 0.2
   const [windowWidth, setWindowWidth] = useState(window.innerWidth)
   const [windowHeight, setWindowHeight] = useState(window.innerHeight)
   const [chatListWidth, setChatListWidth] = useState(window.innerWidth*chatListWidthFraction)
@@ -101,7 +106,7 @@ function ChatBox(props, {onClick}) {
               imageListId = response.data[0]["Ids"] + 1
               messageId = response.data[1]["Ids"] + 1
             }
-            console.log(response.data)
+       
           
 
             // Checks for every image in attachment window
@@ -145,7 +150,7 @@ function ChatBox(props, {onClick}) {
 
     }
 
-    console.log("image list Id: " + imageListId)
+
     const messageJSON = {
       senderId: sender,
       receiverId: receiver,
@@ -185,6 +190,10 @@ function ChatBox(props, {onClick}) {
         const messageResponse = await axios.get(endpoint)
         const imageSet = new Set()
 
+
+        if(!messageResponse.data){
+          setRenderMessageBox(handleMessageView([]))
+        }
         if(messageResponse.data){
 
           messageResponse.data.map((entry) => {
@@ -238,7 +247,7 @@ function ChatBox(props, {onClick}) {
           
         }
       } catch(error){
-        console.error('Error fetching chat information', error)
+
       }
     };
 
@@ -255,6 +264,9 @@ function ChatBox(props, {onClick}) {
       try{
         const endpoint = `${apiBaseUrl}/messages/${senderId}/${receiverId}`
         const messageResponse = await axios.get(endpoint)
+        if(!messageResponse.data){
+          setRenderMessageBox(handleMessageView([]))
+        }
         if(messageResponse.data && messageResponse.data.length > currentMessagesSize){
           currentMessagesSize = messageResponse.data.length
 
@@ -266,6 +278,11 @@ function ChatBox(props, {onClick}) {
                 imageSet.add(entry.ImageListId)
             }
           })
+
+          if(imageSet.size === 0){
+            setRenderedMessages(handleMessageView(messageResponse.data))
+            return
+          }
 
           setInitialMessages(messageResponse.data)
 
@@ -360,31 +377,9 @@ function ChatBox(props, {onClick}) {
 
 
 
- // Resizing window
-//   useEffect(() => {
-//     const handleWindowResize = () => {
-//         setWindowHeight(window.innerHeight);
-//         setWindowWidth(window.innerWidth);
-//         const chatLW = window.innerWidth * chatListWidthFraction;
-//         setChatListWidth(chatLW);
-//         setChatBoxWidth(window.innerWidth*(1-chatListWidthFraction))
-//         setMaxWidth((window.innerWidth - chatLW) * maxWidthPercentage);
-//     };
-
-//     // Attach event listener to handle window resize
-//     window.addEventListener('resize', handleWindowResize);
-
-//     handleWindowResize()
-
-//     // Cleanup function to remove event listener when component unmounts
-//     return () => {
-//         window.removeEventListener('resize', handleWindowResize);
-//     };
-// }, []);
 
 useEffect(() => {
   const handleWindowResize = () => {
-      console.log("Window Resized"); // Add this line
       const newWindowHeight = window.innerHeight;
       const newWindowWidth = window.innerWidth;
       const chatLW = newWindowWidth * chatListWidthFraction;
@@ -685,9 +680,8 @@ useEffect(() => {
           let firstImgHeight = 100
           let firstImgWidth = 100
 
-          console.log(messageImagesDictionary)
           if(messageImagesDictionary[message.ImageListId]){
-            messageImagesDictionary[message.ImageListId].map((image) => {
+            messageImagesDictionary[message.ImageListId].map((image, imagesIndex) => {
               
                 
                 if(index === 0){
@@ -706,7 +700,7 @@ useEffect(() => {
 
                 const maxWidth = windowWidth*0.4
                 const containerWidth = Math.min(firstImgWidth, maxWidth)
-                heightUnit += image.Height
+                heightUnit += image.Height + 50
               //  widthUnit =  Math.max(extraSpace, longestTextWidth + letterWidth*2)
                 if(containerWidth > widthUnit){
                   chatImageStyle = chatImagesStyle(containerWidth)
@@ -715,7 +709,8 @@ useEffect(() => {
                  
 
                 imgElements.push(
-                  <img     
+                  <img  
+                      key = {`m_${index}_${imagesIndex}`} 
                       src={imgPath}
                       style={chatImageStyle}
                       onClick={()=> window.open(image.ImagePath, '_blank')}
@@ -726,12 +721,7 @@ useEffect(() => {
                 )
             }) 
 
-           
           }
-    
-          
-
-
         }
         
         heightUnit = Math.round(heightUnit)
@@ -743,7 +733,9 @@ useEffect(() => {
 
 
 
-        const formattedTime = getCurrentTime(message.date);
+       // const formattedTime = getCurrentTime(message.date);
+
+        const formattedTime = getFormattedTime(message.date)
         const [timeTextWidth, timeTextHeight] = getTextWidth([formattedTime])
 
 
@@ -776,28 +768,22 @@ useEffect(() => {
 
 
         let topMargin = 0
-        if(index > 0 && messages[index-1].senderId !== messages[index].senderId){
+        if(index > 1 && messages[index-1].senderId !== messages[index].senderId){
           topMargin =  25
         }
 
 
         htmlElements.push(
-            <div key={index} style={{...combinedDic, marginTop: `${topMargin}px`}}>
+            <div key={`r_${receiverId}_${index}`} style={{...combinedDic, marginTop: `${topMargin}px`}}>
                 {/* <p>{msgText}</p> */}
                 <p style={messageStyle}>
                   {
-                    msgTextArray.map((line, index) => 
-                      <span key={index}>{line}<br /></span>
-                  )       
+                    msgTextArray.map((line, mIndex) => 
+                      <span key={`m-${mIndex}`}>{line}<br /></span>
+                    )       
                   }
                 </p>
                 <br/>
-                {/* {hasMessage ? 
-                        <img     
-                          src={imgPath}
-                          style={chatImageStyle}
-                        />
-                 :null} */}
                  {imgElements}
 
                 <p style={{ color: 'grey', fontSize: '12px', position: 'absolute', bottom: -10, right: 10 }}>{formattedTime}</p>
@@ -1009,10 +995,10 @@ const handleAttachmentView = () => {
     cursor: `pointer`,
   }
 
-  imgList.map((img, index) => {
+  imgList.map((img, imageIndex) => {
     imgElements.push(
-      <img key={index} src={img.url} alt={`Image ${index}`}
-           style={{...smallImgStyle, left: `${fullContainerWidth/2 - 25*imgList.length + index*15}px`}}
+      <img key={`i-${imageIndex}`} src={img.url} alt={`Image ${imageIndex}`}
+           style={{...smallImgStyle, left: `${fullContainerWidth/2 - 25*imgList.length + imageIndex*15}px`}}
            onClick={() => setAttachImage(img)}
       />
     )
@@ -1135,7 +1121,8 @@ const imgAttachment = {
   const chatBox = {
     marginLeft: `${chatListWidth}px`,
     width: `${windowWidth-chatListWidth}px`,
-    height: `${windowHeight}px`
+    height: `${windowHeight}px`,
+    left: '5px'
 }
 
 const chatBoxWindow = {

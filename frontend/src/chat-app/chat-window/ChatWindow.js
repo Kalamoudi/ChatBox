@@ -8,6 +8,7 @@ import ChatSignIn from './ChatSignIn';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { apiBaseUrl } from './ApiConfig';
+import ChatSeperator from './ChatSeperator';
 
 function ChatWindow() {
 
@@ -17,6 +18,7 @@ function ChatWindow() {
     const [windowHeight, setWindowHeight] = useState(window.innerHeight)
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
     const [sessionExist, setSessionExist] = useState(false)
+    const [chatListWidthFraction, setChatListWidthFraction] = useState(0.2)
 
     const navigate = useNavigate();
 
@@ -45,14 +47,17 @@ function ChatWindow() {
       //   if(senderId > 0){
         if(sessionExist === true){
             htmlElements.push(
-                <div>
-                    <ChatList senderId={senderId} setSenderId={setSenderId} receiverId={receiverId} setReceiverId={setReceiverId}/>
-                    <ChatBox senderId={senderId} setSenderId={setSenderId} receiverId={receiverId} setReceiverId={setReceiverId}/>
+                <div key="chat">
+                    <ChatList senderId={senderId} setSenderId={setSenderId} receiverId={receiverId} setReceiverId={setReceiverId}
+                                    chatListWidthFraction={chatListWidthFraction} setChatListWidthFraction={setChatListWidthFraction}/>
+                    <ChatSeperator chatListWidthFraction={chatListWidthFraction} setChatListWidthFraction={setChatListWidthFraction}/>
+                    <ChatBox senderId={senderId} setSenderId={setSenderId} receiverId={receiverId} setReceiverId={setReceiverId}
+                            chatListWidthFraction={chatListWidthFraction} setChatListWidthFraction={setChatListWidthFraction}/>
                 </div>
             )
         }else{
             htmlElements.push(
-                <div>
+                <div key="sign-in">
                     <ChatSignIn 
                         senderId={senderId} 
                         setSenderId={setSenderId} 

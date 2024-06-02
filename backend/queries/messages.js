@@ -105,10 +105,42 @@ const getMessageImagesByIds = (app, connection) => {
 }
 
 
+const getLastMessageBySenderId = (app, connection) => {
+    app.get('/chatbox/lastMessages/:senderId', (req, res) => {
+        const { senderId } = req.params;
+        const tableName = 'messages'
+        const queryString = `
+        SELECT m.*
+        FROM ${tableName} m
+        INNER JOIN (
+            SELECT receiverId, MAX(id) AS max_id
+            FROM ${tableName}
+            WHERE senderId = ${senderId}
+            GROUP BY receiverId
+        ) AS subquery ON m.id = subquery.max_id;
+        
+        `
+
+        // Execute the query
+        connection.query(queryString, (err, result) => {
+            if (err) {
+                console.error('Error executing query:', err);
+                // Send an HTTP response indicating the error
+                res.status(500).json({ error: 'Internal server error' });
+            } else {
+                // Send the query result as JSON response
+                res.json(result);
+            }
+        });
+    });
+}
+
+
 
 module.exports = {
     getMessagesBySenderIdAndReceiverId,
     getAllMessages,
     postMessagesBySenderIdAndReceiverId,
-    getMessageImagesByIds
+    getMessageImagesByIds,
+    getLastMessageBySenderId,
 };

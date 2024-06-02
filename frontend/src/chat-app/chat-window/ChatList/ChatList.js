@@ -1,15 +1,20 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './ChatList.css';
-import ClipboardPaste from '../../../clipboardCopyPaste/clipboardPaste'
 import axios from 'axios';
 import { apiBaseUrl } from '../ApiConfig';
-import emptyProfilePicture from '../../../assets/icons/chatapp/initial-profile-picture-nobg.png'
+import getFormattedTime from '../utils/formattedTime';
+import Var from '../../chat-variables/variables';
+
+
 
 function ChatList(props) {
 
-    const {senderId, setSenderId, receiverId, setReceiverId} = props
+    const {
+        senderId, setSenderId, receiverId, setReceiverId,
+        chatListWidthFraction, setChatListWidthFraction
+    } = props
 
-    const chatListWidthFraction = 0.2
+    //const chatListWidthFraction = 0.2
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
     const [windowHeight, setWindowHeight] = useState(window.innerHeight)
     const [chatListWidth, setChatListWidth] = useState(window.innerWidth*chatListWidthFraction)
@@ -17,6 +22,7 @@ function ChatList(props) {
     const [changeProfilePicture, setChangeProfilePicture] = useState(false)
     const [profilePictureDict, setProfilePictureDict] = useState({})
     const [listRender, setListRender] = useState(null)
+    const [lastMessagesDict, setLastMessagesDict] = useState([])
 
 
     const [chats, setChats] = useState([])
@@ -26,11 +32,12 @@ function ChatList(props) {
 
 
 
+
     useEffect(() => {
         setListRender(handleChatsListView())
     }, [profilePictureDict])
 
-    // fetch chats, user profile pictures Ids, and receivers
+    // fetch active conversations, user profile pictures Ids, and receivers
     useEffect(() => {
         const fetchChats = async () => {
             try {
@@ -48,6 +55,10 @@ function ChatList(props) {
             try {
                 // Make a GET request to the backend API endpoint
                 const response = await axios.get(`${apiBaseUrl}/users/${senderId}/receivers`);
+
+                const endpoint = `${apiBaseUrl}/lastMessages/${senderId}`
+                const messageResponse = await axios.get(endpoint)
+
                 setReceivers(response.data)
         
             } catch (error) {
@@ -71,7 +82,6 @@ function ChatList(props) {
                 try{
                     const response = await axios.post(`${apiBaseUrl}/profilePicture/${profilePictureId}`)
                
-                    console.log(response.data)
 
                 }catch(error){
                     console.error('Error fetching profile picture')
@@ -101,7 +111,6 @@ function ChatList(props) {
              
 
                 const ppDict = {}
-                console.log(response.data)
                 response.data.map(entry => {
                      const imgName = entry.ProfilePicture
                      const imagePath = `${apiBaseUrl}/AllProfilePictures/` + imgName;
@@ -115,8 +124,34 @@ function ChatList(props) {
                 console.error('Error fetching profile picture: ' + error)
             }
         }
+        const getLastMessages = async () => {
+
+            
+            try{
+                const endpoint = `${apiBaseUrl}/lastMessages/${senderId}`
+                const messageResponse = await axios.get(endpoint)
+                
+    
+             const mRDict = {}
+
+             messageResponse.data.map((entry) => {
+                mRDict[entry.receiverId] = {          
+                   content: entry.content.slice(0, 10),
+                   date: getFormattedTime(entry.date),
+                }
+             })
+
+   
+             setLastMessagesDict(mRDict)
+
+
+            }catch(error){
+                console.error('Error fetching last messages: ' + error)
+            }
+        }
 
         fetchReceiverProfilePictures()
+        getLastMessages()
 
 
     }, [receivers, changeProfilePicture])
@@ -157,7 +192,6 @@ function ChatList(props) {
             }
 
             
-            console.log(profilePicture)
             // Add new Picture
 
            // let blob = await fetch(profilePicture.blob).then(r => r.blob());
@@ -167,13 +201,11 @@ function ChatList(props) {
                     profilePicturePath: profilePicture.path
     
                 });
-              
-                console.log('Response:', response.data);
+
             } catch (error) {
                 console.error('Error uploading Blob:', error);
             }
 
-            console.log("reached here")
             
 
             if(currentPictureId !== 1){
@@ -213,8 +245,13 @@ function ChatList(props) {
     }, [changeProfilePicture])
 
 
-       // Handles resizing of components when window changes size
-       useEffect(() => {
+
+    useEffect(() => {
+        setChatListWidth(window.innerWidth*chatListWidthFraction)
+    }, [chatListWidthFraction])
+
+    // Handles resizing of components when window changes size
+    useEffect(() => {
         const handleWindowResize = () => {
             setWindowHeight(window.innerHeight);
             setWindowWidth(window.innerWidth);
@@ -238,6 +275,7 @@ function ChatList(props) {
 
     const handleListItemClick = (receiver) => {
         setReceiverId(receiver.user_id)
+        
     }
 
 
@@ -317,19 +355,59 @@ function ChatList(props) {
             position: `relative`,
             flexDirection: `column`,
             marginLeft: `10px`,
-            bottom: '10px',
+            bottom: '15px',
             color: `rgb(5, 5, 5)`,
             fontSize: `15px`,
 
+        }
+
+        const lastMessageStyle = {
+            display: 'flex',
+            position: `relative`,
+            bottom: '29.5px',
+            left: `11px`,
+            color: `rgb(5, 5, 5)`,
+            fontSize: `15px`,
+
+        }
+
+        const messageDateStyle = {
+            display: 'flex',
+            position: `relative`,
+            bottom: '83px',
+            left: `160px`,
+            color: `rgb(5, 5, 5)`,
+            fontSize: `15px`,
+            transform: `translate(0%, 0%)`,
+            fontSize: `14px`,
+
+        }
+
+        const profileLayout = {
+            position: `relative`,
+           // left: `50%`,
+
+            height: `50px`,
+
+            marginBottom: `10px`,
+
+            borderRadius: `2px`,
+            backgroundColor: `rgb(110, 145, 159)`,
+          //  transform: `translate(-50%, 0%)`,
+            
         }
 
 
         const htmlElements = []
 
         htmlElements.push(
-            <div>
+            <div key="hiddenPic">
                  <input id="profilePicInput" type="file" style={{display: `none`}} onChange={handleFileSelect} />
-                <p onClick={() => handleAttachmentButton()}>Change profile</p>
+                 <div style={profileLayout}>
+                    <button 
+                         style={{right:`50%`, transform:`translate(0%, 15%)`, background: 'none', outline:'none', cursor:'pointer', border:'none'}}
+                         onClick={() => handleAttachmentButton()}>Change profile picture</button>
+                 </div>
             </div>
         )
 
@@ -337,20 +415,18 @@ function ChatList(props) {
             htmlElements.push(
                 <div key={index} 
                     style= {chatListItem}
-                    // style={{...chatListItem, 
-                    //     position: 'relative', 
-                    //     marginTop: `${topMargin}px`}}
                     onClick={() => handleListItemClick(receiver)}>
 
-
-                    
-                    {/* <p>{msgText}</p> */}
                     <img     
                         src={profilePictureDict[receiver.ProfilePictureId]}
                         style={profilePictureStyle}
 
                     />
-                    <p style={userNameStyle}> <b>{receiver.username}</b> </p>
+                    <div style={{height: `0px`}}>
+                        <p style={userNameStyle}> <b>{receiver.username}</b> </p>
+                        <p style={lastMessageStyle}>{lastMessagesDict[receiver.user_id].content}</p>
+                        <p style={messageDateStyle}>{lastMessagesDict[receiver.user_id].date}</p>
+                    </div>
                 </div>
             )
             topMargin = 5
@@ -369,7 +445,7 @@ function ChatList(props) {
         boxShadow: `1px 1px 5px rgba(0, 0, 0, 0.1)`,
         overflow: `hidden`,
         backgroundColor: `rgb(119, 166, 183)`,
-        borderRight: `1px solid rgb(83, 109, 119)`,
+     //   borderRight: `1px solid rgb(83, 109, 119)`,
         
     }
 
@@ -386,7 +462,6 @@ function ChatList(props) {
         <div style={chatList}>
             <div style={chatListWindow}>
                 {listRender}
-
             </div>
         </div>
 
