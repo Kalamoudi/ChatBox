@@ -2,8 +2,18 @@
 function getFormattedTime(messageDate) {
 
     const currentTime = new Date(messageDate);
-    let hours = currentTime.getHours();
+
+    const dateString = currentTime.toString();
+    const dateParts = dateString.split(' ');
+    const timeZonePart = dateParts[5];
+    const timeZoneNumber = parseInt(timeZonePart.slice(3, 6));
+ 
+
+
+    let hours = currentTime.getHours() + timeZoneNumber;
     const minutes = currentTime.getMinutes();
+
+
     let ampm = 'AM'
     const extraZero = minutes < 10 ? '0' : ''
     if(hours >= 12){

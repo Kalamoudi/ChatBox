@@ -73,7 +73,7 @@ function ChatSeperator(props) {
     const chatListSeperator = {
         // boxSizing: `border-box`,
         position: 'absolute',
-        width: `6px`,
+        width: `7px`,
         height: `${windowHeight}px`,
         left: `${currentPosition-1}px`,
         backgroundColor: `rgb(97, 140, 156)`,

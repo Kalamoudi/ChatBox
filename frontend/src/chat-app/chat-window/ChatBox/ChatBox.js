@@ -83,8 +83,21 @@ function ChatBox(props, {onClick}) {
 
   const handlePost = async (message) => {
 
-    const currentDate = new Date();
-    const mySqlDate = currentDate.toISOString().replace('T', ' ').slice(0, -5)
+
+    var date;
+    date = new Date();
+    date = date.getUTCFullYear() + '-' +
+        ('00' + (date.getUTCMonth()+1)).slice(-2) + '-' +
+        ('00' + date.getUTCDate()).slice(-2) + ' ' + 
+        ('00' + date.getUTCHours()).slice(-2) + ':' + 
+        ('00' + date.getUTCMinutes()).slice(-2) + ':' + 
+        ('00' + date.getUTCSeconds()).slice(-2);
+    console.log(date);
+
+
+
+    //const mySqlDate = currentDate.toISOString().replace('T', ' ').slice(0, -5)
+    const mySqlDate = date
 
     const sender = senderId
     const receiver = receiverId
@@ -418,6 +431,12 @@ useEffect(() => {
     }
   }, [imgList])
 
+  useEffect(() => {
+    setChatListWidth(window.innerWidth*chatListWidthFraction)
+    setChatBoxWidth(window.innerWidth*(1-chatListWidthFraction))
+    setMaxWidth(window.innerWidth*(1-chatListWidthFraction)*maxWidthPercentage)
+}, [chatListWidthFraction])
+
 
 
   const handleSendMessage = () => {
@@ -491,15 +510,65 @@ useEffect(() => {
 
   const getDaySeperatorDate = (dateString) => {
 
+    const timeZonePart = new Date().toString().split(' ')[5];
+    const timeZoneNumber = parseInt(timeZonePart.slice(3, 6));
+    
+    const hours = parseInt(dateString.slice(11, 13))
+
+    console.log(hours)
+
+
+
+    console.log(dateString)
+
+    let day = parseInt(dateString.slice(8, 10))
+    let year = parseInt(dateString.slice(0, 4))
+    let month = parseInt(dateString.slice(5, 7))
+
+
     const numToMonth = {
-      '01': "Jan", '02': "Feb", '03': "Mar", '04': "Apr", '05': "May",
-      '06': "Jun", '07': "Jul", '08': "Aug", '09': "Sep", '10': "Oct",
-      '11': "Nov", '12': "Dec"
+      1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May",
+      6: "Jun", 7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct",
+      11: "Nov", 12: "Dec"
+    }
+    const monthDays = {
+      1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31,
+      8: 31, 9: 30, 10: 31, 11: 30, 12: 31
+    };
+
+    const isLeapYear = (year) => {
+      return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    };
+    
+    if (isLeapYear(year)) {
+      monthDays["02"] = 29;
     }
 
-    let date = numToMonth[dateString.slice(5, 7)]
-    date += ' ' + dateString.slice(8, 10)
-    date += ' ' + dateString.slice(0, 4)
+    if(hours + timeZoneNumber >= 24){
+        day += 1
+        if(day > monthDays[month]){
+          day = 1
+          month += 1
+          if(month > 12){
+            year += 1
+          }
+        }
+    }else if(hours + timeZoneNumber < 0){
+      day -= 1
+      if(day < 1){
+        month -= 1
+        if(month < 1){
+          month = 12
+          year -= 1
+        }
+        day = monthDays[month]
+      }
+    }
+
+    let monthAbv = numToMonth[month]
+
+    const dayString = day < 10 ? `0${day}` : `${day}`
+    const date = monthAbv + ' ' + dayString + ' ' + year
 
     return date
 
@@ -754,7 +823,7 @@ useEffect(() => {
         if(showDate !== newDate){
           //setPreviousDate(newDate)
           previousDate = newDate
-          showDate = getDaySeperatorDate(newDate)
+          showDate = getDaySeperatorDate(message.date)
 
         
 
@@ -1120,7 +1189,8 @@ const imgAttachment = {
 
   const chatBox = {
     marginLeft: `${chatListWidth}px`,
-    width: `${windowWidth-chatListWidth}px`,
+   // width: `${windowWidth-chatListWidth-8}px`,
+    width: `${chatBoxWidth-6}px`,
     height: `${windowHeight}px`,
     left: '5px'
 }
