@@ -1237,10 +1237,12 @@ const handleMessageTextBox = () => {
 
     if(isSendingVoiceMessage){
       domElements.push(
-        <div style={sendRecordingButtonStyle}>
+        <div style={sendRecordingButtonStyle}
+        onClick={handleSendButton}
+        >
             <img src={sendButton}
               style={sendButtonStyle}
-              onClick={handleSendButton}
+              
             />
         </div>
       )
