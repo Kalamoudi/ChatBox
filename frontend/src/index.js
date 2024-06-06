@@ -9,6 +9,7 @@ import BlockBreaker from './block-breaker/BlockBreaker';
 import ChatWindow from './chat-app/chat-window/ChatWindow'
 import ChatSignIn from './chat-app/chat-window/ChatSignIn';
 import ChatSignUp from './chat-app/chat-window/ChatSignUp';
+import AudioRecorder from './chat-app/chat-recorder-test/AudioRecorder';
 
 import './style.css';
 
@@ -31,6 +32,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/" element={<ChatWindow />} />
         <Route path="/chatapp/login" element={<ChatSignIn />} />
         <Route path="/chatapp/register" element={<ChatSignUp />} />
+        <Route path="/chatapp/recorder" element={<AudioRecorder />} />
       </Routes>
     </Router>
   </React.StrictMode>,

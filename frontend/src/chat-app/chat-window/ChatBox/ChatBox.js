@@ -2,10 +2,20 @@ import React, { useState, useEffect, useRef } from 'react';
 import './ChatBox.css';
 import axios from 'axios';
 import { apiBaseUrl } from '../ApiConfig';
+
 import attachmentImage from '../../../assets/icons/chatapp/attachment-icon.png'
 import closeIcon from '../../../assets/icons/chatapp/close-icon.png'
+import microphoneInactive from '../../../assets/icons/chatapp/microphone-inactive.png'
+import microphoneActive from '../../../assets/icons/chatapp/microphone-active.png'
+import pauseButton from '../../../assets/icons/chatapp/pause-button.png'
+import sendButton from '../../../assets/icons/chatapp/send-button.png'
+import trashCan from '../../../assets/icons/chatapp/trash-can.png'
+import playButton from '../../../assets/icons/chatapp/play-button.png'
+import recordingWave from '../../../assets/icons/chatapp/voice.png'
+
 import getFormattedTime from '../utils/formattedTime';
 import Var from '../../chat-variables/variables'
+import ChatRecorder from '../../chat-recorder-test/ChatRecorder'
 
 function ChatBox(props, {onClick}) {
 
@@ -24,6 +34,30 @@ function ChatBox(props, {onClick}) {
   const [chatBoxWidth, setChatBoxWidth] = useState(window.innerWidth*(1-chatListWidthFraction))
   const [imgList, setImgList] = useState([])
   const [attachImage, setAttachImage] = useState(null)
+
+
+
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const recordingTimerRef = useRef(null);
+  const [playingTime, setPlayingTime] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const playingTimerRef = useRef(null);
+
+  let trashPlayDistance = 150
+
+
+  const microphoneStates = [microphoneInactive, pauseButton]
+  const playButtonState = [playButton, pauseButton]
+  const [microphoneStateIndex, setMicrophoneStateIndex] = useState(0)
+  const [playButtonIndex, setPlayButtonIndex] = useState(0)
+  const [recordingSent, setRecordingSent] = useState(true)
+  const [deleteRecording, setDeleteRecording] = useState(true)
+
+
+
+
+
   const attachContrainerRef = useRef(null)
 
   const maxWidthPercentage = 0.7
@@ -43,6 +77,9 @@ function ChatBox(props, {onClick}) {
   const [messageImagesIds, setMessageImagesIds] = useState(new Set())
   const [initialMessages, setInitialMessages] = useState([])
 
+  const [isRecording, setIsRecording] = useState(false)
+  const [isSendingVoiceMessage, setIsSendingVoiceMessage] = useState(false)
+
   let previousDate = ""
   let currentMessagesSize = 0
 
@@ -52,6 +89,7 @@ function ChatBox(props, {onClick}) {
   const [renderMessageBox, setRenderMessageBox] = useState(null)
 
   const chatBoxRef = useRef(null)
+  const audioRecorderRef = useRef(null);
   
 
   // Testing purposes
@@ -184,6 +222,8 @@ function ChatBox(props, {onClick}) {
 
   }
 
+
+  
 
 
   useEffect(() => {
@@ -436,6 +476,38 @@ useEffect(() => {
     setChatBoxWidth(window.innerWidth*(1-chatListWidthFraction))
     setMaxWidth(window.innerWidth*(1-chatListWidthFraction)*maxWidthPercentage)
 }, [chatListWidthFraction])
+
+
+useEffect(() => {
+  if (isRunning) {
+    recordingTimerRef.current = setInterval(() => {
+      setRecordingTime(prevTime => prevTime + 1);
+    }, 1000);
+  } else {
+
+    clearInterval(recordingTimerRef.current);
+  }
+
+  return () => clearInterval(recordingTimerRef.current);
+}, [isRunning]);
+
+useEffect(() => {
+  console.log(playingTime)
+  if (isPlaying && playingTime < recordingTime && playButtonIndex === 1) {
+    playingTimerRef.current = setInterval(() => {
+      setPlayingTime(prevTime => prevTime + 1);
+    }, 1000);
+  } else {
+   // setIsPlaying(false)
+    if(playingTime >= recordingTime){
+      setPlayingTime(0)
+    }
+    setPlayButtonIndex(0)
+    clearInterval(playingTimerRef.current);
+  }
+
+  return () => clearInterval(playingTimerRef.current);
+}, [isPlaying, playingTime, playButtonIndex]);
 
 
 
@@ -915,38 +987,371 @@ useEffect(() => {
 
   };
 
+
+
+  const typeBarStyle = {
+    position: `absolute`,
+    width: `${(windowWidth*(1-0.2)-chatListWidth)+70}px`,
+    backgroundColor: `white`,
+    height: '35px',
+    bottom: `5px`,
+    borderRadius: `4px`, 
+    left: `-20px`,
+    bottom:`-35px`,
+    
+
+
+
+  }
+
+  const textAreaStyle = {
+
+    // width: `${windowWidth*(1-0.2)-chatListWidth}px`,e
+     position: `absolute`,
+    // top: `50px`,
+     width: `${(windowWidth*(1-0.2)-chatListWidth)}px`,
+     resize: 'none',
+     maxWidth: `100%`,
+     
+    //  borderTopLeftRadius: `4px`, 
+    //  borderBottomLeftRadius: `4px`,
+     borderRadius: `4px`,
+     outline: `none`,
+     border: `none`,
+   
+   }
+
+   const attachmentButton = {
+    display:`flex`,
+    position: `absolute`,
+    //right: `100%`,
+    top: `${(textareaRows-2)*15.25 + 8}px`,
+   // left: `${windowWidth*(1-0.2)-chatListWidth - 25}px`,
+
+    width: `20px`,
+    height: `auto`,
+    alignItems: `center`,
+    cursor: `pointer`,
+    left: `10px`,
+    // backgroundImage: `url(${attachmentIcon})`,
+}
+
+const microphoneButton = {
+  display:`flex`,
+  position: `absolute`,
+  top: `${(textareaRows-2)*15.25 + 8}px`,
+
+  width: `20px`,
+  height: `auto`,
+  alignItems: `center`,
+  cursor: `pointer`,
+  right: `10px`,
+  
+}
+
+const sendButtonStyle = {
+
+  display:`flex`,
+  position: `absolute`,
+  top: `${(textareaRows-2)*15.25 + 8}px`,
+
+  width: `20px`,
+  height: `auto`,
+  alignItems: `center`,
+  cursor: `pointer`,
+  right: `10px`,
+  bottom: `10px`,
+
+}
+
+
+const sendRecordingButtonStyle = {
+  position: `absolute`,
+  top: `${(textareaRows-2)*15.25 -1 }px`,
+  width: `40px`,
+  height: `38px`,
+  alignItems: `center`,
+  cursor: `pointer`,
+  right: `-45px`,
+  backgroundColor: `rgb(10, 165, 192)`,
+  borderRadius: `4px`,
+  transform: `translate(-0px, 0)`
+}
+
+const trashCanStyle = {
+  display:`flex`,
+  position: `absolute`,
+  top: `${(textareaRows-2)*15.25 + 8}px`,
+
+  width: `20px`,
+  height: `auto`,
+  alignItems: `center`,
+  cursor: `pointer`,
+  right: `${40+trashPlayDistance}px`,
+  bottom: `10px`,
+}
+
+const playButtonStyle = {
+  display:`flex`,
+  position: `absolute`,
+  top: `${(textareaRows-2)*15.25 + 9.5}px`,
+
+  width: `16px`,
+  height: `auto`,
+  alignItems: `center`,
+  cursor: `pointer`,
+  right: `${trashPlayDistance}px`,
+  bottom: `10px`,
+}
+
+const recordingWaveStyle = {
+    display:`flex`,
+    position: `absolute`,
+    top: `${(textareaRows-2)*15.25 }px`,
+
+    width: `35px`,
+    height: `auto`,
+    alignItems: `center`,
+  //  left: `${(windowWidth*(1-0.2)-chatListWidth)-60}px`,
+    bottom: `10px`,
+}
+
+const timerStyle = {
+  display:`flex`,
+  position: `absolute`,
+  top: `${(textareaRows-2)*15.25 }px`,
+
+  width: `35px`,
+  height: `auto`,
+  alignItems: `center`,
+  cursor: `pointer`,
+  right: `104px`,
+  bottom: `10px`,
+
+}
+
+const recordingCircle = {
+  display: 'flex',
+  position: 'absolute',
+  top: `${(textareaRows-2)*15.25 + 12}px`,
+  width: `10px`,
+  height: `10px`,
+  alignItems: `center`,
+  //right: `${trashPlayDistance}px`,
+  right: `${trashPlayDistance+5}px`,
+  backgroundColor: `red`,
+  borderRadius: `5px`, 
+
+}
+
+
+
+
 const handleMessageTextBox = () => {
 
-    return (
-    <div className="type-bar">
-          <textarea      
-          //   onKeyDown={handleMessageInput}
-              className='type-bar-input' // Set rows to 1 to make it look like an input field
-              style={textAreaStyle}
+  const formatTime = (totalSeconds) => {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
 
-              rows={textareaRows}
-              placeholder="Type your message..."
-              onChange={handleMessageInput}
-              value={messageText}
-              onKeyDown={handleMessageKeyDown}
+  const handleMicrophonButton = () => {
+    setRecordingSent(false)
+    if(microphoneStateIndex === 0){
+      setMicrophoneStateIndex(1)
+      handleRecordButtonClick()
+      setIsSendingVoiceMessage(true)
+      setIsRecording(true)
+      setIsRunning(true)
+      setPlayButtonIndex(0)
+      handleStopButtonClick()
+      setIsPlaying(false)
+
+    }
+    else{
+      setMicrophoneStateIndex(0)
+      handleStopButtonClick()
+      setIsRecording(false)
+      setIsRunning(false)
+      
+    }
+  }
+
+  const handlePlayButton = () => {
+
+    if(playButtonIndex === 0){
+      setPlayButtonIndex(1)
+      handlePlayButtonClick()
+      setIsPlaying(true)
+    }
+    else{
+      setPlayButtonIndex(0)
+      handleStopButtonClick()
+      //setIsPlaying(false)
+    }
+
+  }
+
+  const handleSendButton = () => {
+    setPlayButtonIndex(0)
+    setIsPlaying(false)
+    setIsRecording(false)
+    setIsRunning(false)
+    setMicrophoneStateIndex(0)
+    handleStopButtonClick()
+    setPlayingTime(0)
+    setRecordingTime(0)
+    setRecordingSent(true)
+
+  }
+
+  const handleDeleteRecording = () => {
+      setPlayButtonIndex(0)
+      setIsPlaying(false)
+      setIsRecording(false)
+      setIsRunning(false)
+      setMicrophoneStateIndex(0)
+      handleStopButtonClick()
+      setPlayingTime(0)
+      setRecordingTime(0)
+      setRecordingSent(true)
+  }
+
+
+  const handleMessageRecording = () => {
+
+
+  
+
+    
+    const domElements = [
+      <img src={microphoneStates[microphoneStateIndex]}
+            style={microphoneButton}
+            onClick={handleMicrophonButton}
+            />
+    ]
+
+    if(recordingSent){
+      return domElements
+    }
+
+    if(isSendingVoiceMessage){
+      domElements.push(
+        <div style={sendRecordingButtonStyle}>
+            <img src={sendButton}
+              style={sendButtonStyle}
+              onClick={handleSendButton}
+            />
+        </div>
+      )
+      let distance = 11
+      let trashDistance = 190
+      let playButtonDistance = 150
+      let waveDistance = -20
+      if(!isRecording){
+        distance += 22
+        trashPlayDistance = 140
+
+        if(isPlaying){
+          trashDistance = 220
+          playButtonDistance = 180
+          waveDistance = 20
+          domElements.push(
+            <p style={{...timerStyle, right:`50px`}}>
+              {formatTime(playingTime)}
+            </p>
+          )
+        }
+        else{
+          trashDistance = 190
+          waveDistance = -20
+          playButtonDistance = 150
+          trashPlayDistance -= 20
+        }
+        domElements.push(
+          <img src={playButtonState[playButtonIndex]}
+            style={{...playButtonStyle, right:`${playButtonDistance}px`}}
+           onClick={handlePlayButton}
           />
-           
-     
-          {/* <button style={attachmentButton}></button> */}
+        )
+      }
+      else{
+        distance -= 22
+        domElements.push(
+          <p style={timerStyle}>
+             {formatTime(recordingTime)}
+          </p>
+        )
+        domElements.push(
+          <div
+            style={recordingCircle}
+          // onClick={handleMicrophonButton}
+          />
+        )
+          
+      }
+      domElements.push(
+          <img src={trashCan}
+            style={{...trashCanStyle, right:`${trashDistance}px`}}
+           onClick={handleDeleteRecording}
+          />
+      )
+ 
 
-          <input id="fileInput" type="file" style={{display: `none`}} onChange={handleFileSelect} />
+      domElements.push(
+        <div style={{position: 'absolute', left: `${(windowWidth*(1-0.2)-chatListWidth)-10-distance}px`}}>
+          <img src={recordingWave}
+            style={{...recordingWaveStyle, right:`${waveDistance}px`}}
+          // onClick={handleMicrophonButton}
+          />
+          <img src={recordingWave}
+            style={{...recordingWaveStyle, right:`${waveDistance-distance}px`}}
+          // onClick={handleMicrophonButton}
+          />
 
 
-          <img src={attachmentImage} 
-               style={attachmentButton}
-               onClick={handleAttachmentButton}
-               />
+        </div>
+      )
+    }
 
 
-          <button className='type-bar-button'
-                  style={typeBarButton} 
-              onClick={handleSendMessage}>Send</button>
+    return domElements
+
+  }
+
+
+    return (
+    <div className="type-bar-parent">
+      <div style={typeBarStyle}>
+        <div style={{position: `absolute`, top:'0px', width:`${(windowWidth*(1-0.2)-chatListWidth)}px`, left:`42px`}}
+        rows={textareaRows}>
+            <textarea      
+            //   onKeyDown={handleMessageInput}
+                className='type-bar-input' // Set rows to 1 to make it look like an input field
+                style={textAreaStyle}
+
+                rows={textareaRows}
+                placeholder="Type your message..."
+                onChange={handleMessageInput}
+                value={messageText}
+                onKeyDown={handleMessageKeyDown}
+            />
+            
+      
+            {/* <button style={attachmentButton}></button> */}
+
+            <input id="fileInput" type="file" style={{display: `none`}} onChange={handleFileSelect} />
+
+
+            </div>
+            <img src={attachmentImage} 
+                style={attachmentButton}
+                onClick={handleAttachmentButton}
+                />
+              {handleMessageRecording()}
+
           </div>
+        </div>
       )
 
 
@@ -1147,17 +1552,7 @@ const handleAttachmentView = () => {
 
 
 
-const textAreaStyle = {
 
- // width: `${windowWidth*(1-0.2)-chatListWidth}px`,
-  width: `${(windowWidth*(1-0.2)-chatListWidth)}px`,
-  resize: 'none',
-  maxWidth: `100%`,
-  borderTopLeftRadius: `4px`, 
-  borderBottomLeftRadius: `4px`,
-  outline: `none`
-
-}
 
 const attachmentWhiteBox = {
   // top: `${(textareaRows-2)*1 - 4}px`,
@@ -1210,18 +1605,24 @@ const typeBarButton = {
 
 }
 
-const attachmentButton = {
-    display:`flex`,
-    position: `absolute`,
-    right: `100%`,
-    top: `${(textareaRows-2)*15.25 + 8}px`,
-    left: `${windowWidth*(1-0.2)-chatListWidth - 25}px`,
-    width: `20px`,
-    height: `auto`,
-    alignItems: `center`,
-    cursor: `pointer`,
-    // backgroundImage: `url(${attachmentIcon})`,
-}
+
+const handleRecordButtonClick = () => {
+  if (audioRecorderRef.current) {
+    audioRecorderRef.current.startRecording();
+  }
+};
+
+const handleStopButtonClick = () => {
+  if (audioRecorderRef.current) {
+    audioRecorderRef.current.stopRecording();
+  }
+};
+
+const handlePlayButtonClick = () => {
+  if (audioRecorderRef.current) {
+    audioRecorderRef.current.playAudio();
+  }
+};
 
 
   return (
@@ -1231,8 +1632,15 @@ const attachmentButton = {
 
       </div>
       <div className='type-bar-container' style={{position:`relative`}}>
+        <ChatRecorder ref={audioRecorderRef} onStop={(audioBlob) => console.log(audioBlob)} />
         {handleMessageTextBox()}
         {handleAttachmentView()}
+        {/* <div style={{position:`fixed`, top:`500px`}}>
+          <button onClick={handleRecordButtonClick}>Start Recording from Parent</button>
+          <button onClick={handleStopButtonClick}>Stop Recording from Parent</button>
+          <button onClick={handlePlayButtonClick} >Play Audio from Parent</button>
+        </div> */}
+        
       </div>
 
 

@@ -29,7 +29,12 @@
   .type-bar {
     position: relative;
     top: 1.5%;
-    left: 3%;
+    left: 5%;
+  }
+  .type-bar-parent {
+    position: relative;
+    top: 1.5%;
+    left: 5%;
   }
   .type-bar-input {
     position: absolute;
@@ -89,7 +94,9 @@
     border-top: 2px rgb(33, 44, 49);
     color: rgb(240, 240, 240);
     position: fixed;
-    background-color: rgb(97, 140, 156),
+    background-color: rgb(92, 165, 192);
+    border:none;
+    hidden
     
 
   }
